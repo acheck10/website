@@ -1,0 +1,71 @@
+.name h1 {
+  color: #000;
+  font-size: 3.2em;  
+  font-weight: bold;
+}
+
+.name p {
+  font-size: 1.5em;
+  color: #000;
+}
+
+.pic p{
+    position: relative;
+    top: 2.7em;
+    /*word-wrap: break-word;*/
+    padding-bottom: 2.7em
+}
+
+.pic a {
+  color: #00b0ff;
+  font-weight: bold;
+  font-size: 1.2px;
+  /*padding: 14px 10px;*/
+  text-transform: uppercase;
+}
+
+.titles {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.titles li {
+  font-size: 1.3em;
+  text-transform: none;
+  list-style-type: none
+}
+
+.titles ul{
+  list-style-type: none;
+}
+
+.abstracts li{
+  font-family: Arial, 'Shift', sans-serif;
+  font-size: 1em;
+  text-transform: none;
+}
+
+h3 {
+  text-transform: uppercase;
+}
+
+li {
+  padding-bottom: .6em;
+}
+
+#research{
+  font-size: 1.2em;
+  padding-bottom: 0em;
+}
+
+.interests {
+  margin-bottom: -2.5em;
+  margin-left: 1em;
+  font-size: 1em;
+}
+
+#last {
+  margin-bottom: 2.5em;
+  margin-left: 1em;
+  font-size: 1em;
+}

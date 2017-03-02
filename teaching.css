@@ -1,0 +1,80 @@
+.name h1 {
+  color: #000;
+  font-size: 3.2em;  
+  font-weight: bold;
+}
+
+.name p {
+  font-size: 1.5em;
+  color: #000;
+}
+
+.pic p{
+    position: relative;
+    top: 2.7em;
+    /*word-wrap: break-word;*/
+    padding-bottom: 2.7em
+}
+
+.pic a {
+  color: #00b0ff;
+  font-size: 1.2px;
+  font-weight: bold;
+  /*padding: 14px 10px;*/
+  text-transform: uppercase;
+}
+
+.titles {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.titles li {
+  font-size: 1.3em;
+  text-transform: none;
+}
+
+.abstracts li{
+  font-family: Arial, 'Shift', sans-serif;
+  font-size: 1em;
+  text-transform: none;
+}
+
+h3 {
+  text-transform: uppercase;
+  margin-bottom: -1em;
+}
+
+li {
+  padding-bottom: .6em;
+}
+
+.classes {
+  margin-top:-1em;
+  font-size: 1.2em;
+  list-style-type: none;
+  margin-bottom: 1em;
+  margin-left: 0em;
+}
+
+.ta .classes {
+  font-size: 1em;
+  list-style-type: none;
+  margin-bottom:-1.7em;
+  margin-left: 1em;
+}
+
+.classes ul {
+  position:relative;
+  font-family: sans-serif;
+  font-size: .9em;
+  list-style-type: none;
+  margin-left: -100px;
+  padding-left: 0px;
+}
+
+.classes ul li {
+  position:relative;
+  margin-left: -100px;
+  padding-left: 0em;
+}

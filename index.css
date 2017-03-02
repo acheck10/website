@@ -1,0 +1,108 @@
+body {
+  margin-right:auto;
+  margin-left: auto;
+  max-width: 1100px;
+  min-width: 840px;
+}
+
+.jumbotron {
+  background-image:url("home1.jpg");
+  height: 400px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  margin-right:auto;
+  margin-left: auto;
+  text-shadow: none;
+}
+
+.jumbotron .container {
+  position: relative;
+  top: -30px;
+}
+
+.jumbotron .contact {
+  position: relative;
+  padding-top: 325px;
+  padding-left: 50px;
+}
+
+.jumbotron h1 {
+  color: #ffffff;
+  font-size: 3.2em;  
+  text-shadow: none;
+}
+
+.jumbotron p {
+  font-size: 1.5em;
+  color: #8904B1;
+  text-shadow: none;
+}
+
+.contact ul{
+  margin-left:-56px;
+  margin-right: 40px;
+}
+.contact li{
+  display: inline;
+  font-size: 0.9em;
+  font-weight: bold;
+  padding-right: 14px;
+  font-family: Arial;
+}
+
+
+/*
+.name h1 {
+  color: #000;
+  font-size: 48px;  
+  font-family: Futura, 'Shift', sans-serif;
+  font-weight: bold;
+}
+
+.name p {
+  font-family: Futura, 'Shift', sans-serif;
+  font-size: 20px;
+  color: #000;
+}
+
+.pic p{
+    position: relative;
+    top: 40px;
+    word-wrap: break-word;
+    padding-bottom: 40px
+}
+
+.pic a {
+    position: absolute;
+}
+
+.learn-more {
+  background-color: #f7f7f7;
+}
+
+.learn-more h3 {
+  font-family: 'Shift', sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.learn-more a {
+  color: #00b0ff;
+}
+
+.neighborhood-guides {
+    background-color: #efefef;
+    border-bottom: 1px solid #dbdbdb;
+}
+
+.neighborhood-guides h2 {
+    color: #393c3d;
+    font-size: 24px;
+}
+
+.neighborhood-guides p {
+    font-size: 15px;
+    margin-bottom: 13px
+}
+
+*/

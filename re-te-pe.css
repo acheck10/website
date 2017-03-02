@@ -1,0 +1,155 @@
+/* General to all Research, Teaching, and Personal*/
+
+h3 {
+  text-transform: uppercase;
+}
+
+li {
+  padding-bottom: .6em;
+}
+
+.name h1 {
+  color: #000;
+  font-size: 3.2em;  
+  font-weight: bold;
+}
+
+.name p {
+  font-size: 1.5em;
+  color: #8904B1;
+}
+
+.pic p{
+    position: relative;
+    top: 2.7em;
+    /*word-wrap: break-word;*/
+    padding-bottom: 2.7em;
+}
+
+.pic a {
+  color: #00b0ff;
+  font-weight: bold;
+  font-size: 1.2em;
+  /*padding: 14px 10px;*/
+  text-transform: uppercase;
+}
+
+/* Research Specific*/
+
+.titles {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.titles li {
+  font-size: 1.3em;
+  text-transform: none;
+}
+
+.titles ul{
+  list-style-type: none;
+}
+
+.abstracts li{
+  font-family: Arial, sans-serif;
+  font-size: 1em;
+  text-transform: none;
+}
+
+#research{
+  font-size: 1.2em;
+  padding-bottom: 0em;
+}
+
+.interests {
+  margin-bottom: -2.5em;
+  margin-left: 1em;
+  font-size: 1em;
+}
+
+#last {
+  margin-bottom: 2.5em;
+  margin-left: 1em;
+  font-size: 1em;
+}
+
+/* Teaching Specific*/
+.classes {
+  margin-top:-1em;
+  font-size: 1.2em;
+  list-style-type: none;
+  margin-bottom: 1em;
+  margin-left: 0em;
+}
+
+.ta .classes {
+  font-size: 1em;
+  list-style-type: none;
+  margin-bottom:-1.7em;
+  margin-left: 1em;
+}
+
+.classes ul {
+  position:relative;
+  font-family: Arial, sans-serif;
+  font-size: .9em;
+  list-style-type: none;
+  margin-left: -100px;
+  padding-left: 0px;
+}
+
+.classes ul li {
+  position:relative;
+  margin-left: -100px;
+  padding-left: 0em;
+}
+
+.terms{
+  margin-bottom: -2em;
+}
+
+.teaching{
+  margin-bottom: -1em;
+}
+
+blockquote.comment {position: relative;
+  background:#eee;
+  font-size: .9em;
+    /*word-wrap: break-word;*/
+    }
+
+/* Personal Specific*/
+
+.personal p{
+	font-family: Arial, sans-serif;
+    position: relative;
+    top: 1em;
+    /*word-wrap: break-word;*/
+    padding-bottom: 1em;
+    font-size: 1.1em;
+}
+
+.personal a {
+  color: #00b0ff;
+  font-weight: bold;
+  font-size: 1em;
+  /*padding: 14px 10px;*/
+  text-transform: none;
+}
+
+/*
+.p_personal {
+	font-family: Arial, sans-serif;
+  margin-top: -2em;
+  margin-bottom: 1em;
+  padding-bottom: 0em;
+}
+
+.a_personal {
+  color: #00b0ff;
+  font-weight: bold;
+  font-size: 1em;
+  /*padding: 14px 10px;
+  text-transform: none;
+}
+*/

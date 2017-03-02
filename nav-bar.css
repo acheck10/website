@@ -1,0 +1,22 @@
+body{
+  font-family: Futura, Questrial, 'Shift', sans-serif;
+  max-width: 1100px;
+    margin-right:auto;
+  margin-left: auto;
+}
+
+.nav a {
+  color: #5a5a5a;
+  font-size: 1.1em;
+  font-weight: bold;
+  padding-right: 14px;
+  text-transform: uppercase;
+}
+
+.nav li {
+  display: inline;
+}
+
+.nav .container {
+    text-align: center;
+}
