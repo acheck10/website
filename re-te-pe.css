@@ -137,6 +137,10 @@ blockquote.comment {position: relative;
   text-transform: none;
 }
 
+.heading h1{
+  text-align: center;
+}
+
 /*
 .p_personal {
 	font-family: Arial, sans-serif;
