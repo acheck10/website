@@ -1,13 +1,5 @@
 <!DOCTYPE html>
-<html>
-
-  <head>
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Questrial">
-    <link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">
-    <link rel="stylesheet" href="bootstrap.css">
-    <link rel="stylesheet" href="nav-bar.css">
-    <link rel="stylesheet" href="re-te-pe.css">
-    <title>State Recession Probabilities</title>
+<head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     
         <script>
@@ -33,17 +25,26 @@
             <style>
                 #map_999025018c754b09b148f1116f56b25e {
                     position: relative;
-                    width: 100.0%;
-                    height: 100.0%;
+                    width: 90.0%;
+                    height: 90.0%;
                     left: 0.0%;
                     top: 0.0%;
+                    margin-right: auto;
+                    margin-left: auto;
+                    padding-left: 15px;
+                    padding-right: 15px;
                 }
             </style>
         
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-  </head>
-
-  <body>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Questrial">
+    <link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">
+    <link rel="stylesheet" href="bootstrap.css">
+    <link rel="stylesheet" href="nav-bar.css">
+    <link rel="stylesheet" href="re-te-pe.css">
+    <title>State Recession Probabilities</title>
+</head>
+<body>    
     <div class="nav">
       <div class="container">
         <ul>
@@ -57,8 +58,8 @@
         </ul>
       </div>
     </div>
-    
-    <div class ="name">
+
+       <div class ="name">
       <div class="container">
         <div class="row">
           <div class="col-md-4">
@@ -70,7 +71,7 @@
       </div>
     </div>
 
-    <div class ="heading">
+        <div class ="heading">
       <div class="container">
         <div class="row">
           <div class="col-md-20">
@@ -80,15 +81,15 @@
       </div>
     </div>
 
-    <div class="personal">
+       <div class="personal">
       <div class="container">
         <ul>
           <li>Note: 3/21/2019 </li>
-          	<ul>
-          		<li>The state employment numbers released by the BLS on 3/16 for January 2020 include a substantial revision to the 2019 numbers. This had the effect of wiping away potential local recessions in Oklahoma and Wyoming. The size of this revision is typical, and in the past other small "recessions" have been washed away by the annual revision. </li>
-          		<li>These numbers are backward looking. As of 3/21 we only have state level data through January 2020. However, I expect that in some states, the February 2020 employment numbers will show weakness, despite the strong national employment number for February. A widespread recession will almost certainly be clear in the March or April data, released in April or May. I will work under the assumption that a national recession began in February 2020 when producing the third graph below. </li>
-          		<li>Reminder: Before the model is run, I censor outlier values. Therefore, the numbers reported for March and April in the Minnesota graph will likely be smaller than the true values. This censoring allows the model to capture both relatlively mild and severe recesssions. For an overview of the full methodology see the link below.</li>
-          	</ul>
+            <ul>
+                <li>The state employment numbers released by the BLS on 3/16 for January 2020 include a substantial revision to the 2019 numbers. This had the effect of wiping away potential local recessions in Oklahoma and Wyoming. The size of this revision is typical, and in the past other small "recessions" have been washed away by the annual revision. </li>
+                <li>These numbers are backward looking. As of 3/21 we only have state level data through January 2020. However, I expect that in some states, the February 2020 employment numbers will show weakness, despite the strong national employment number for February. A widespread recession will almost certainly be clear in the March or April data, released in April or May. I will work under the assumption that a national recession began in February 2020 when producing the third graph below. </li>
+                <li>Reminder: Before the model is run, I censor outlier values. Therefore, the numbers reported for March and April in the Minnesota graph will likely be smaller than the true values. This censoring allows the model to capture both relatlively mild and severe recesssions. For an overview of the full methodology see the link below.</li>
+            </ul>
           <li><a href="https://asymmetriceconomist.wordpress.com/2017/07/17/recession-probabilities-for-all-50-states/" target="_blank">Methodology</a></li>
           <li><a href="ms_results.csv">Regime dependent growth rates and most recent recession probabilities (.csv)</a></li>
           <li><a href="rec_probs.csv">Historical Recession Probabilities (.csv)</a></li>
@@ -109,6 +110,8 @@
       </div>
     </div>
 
+    <div class="folium-map" id="map_999025018c754b09b148f1116f56b25e" ></div>
+
     <div class ="personal">
       <div class="container">
         <div class="row">
@@ -120,41 +123,8 @@
         </div>
       </div>
     </div>
-
-    <div class ="personal">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-20">
-          <div class="thumbnail">
-                <img src="employment_recessions.png"/>
-          </div>
-        </div>
-        </div>
-      </div>
-    </div>
-
-    <div class ="personal">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-20">
-                <div class="folium-map" id="map_999025018c754b09b148f1116f56b25e" ></div>
-        </div>
-        </div>
-      </div>
-    </div>
-
-  </body>
-    <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-54745637-1', 'auto');
-  ga('send', 'pageview');
-
-</script>
-
+        
+</body>
 <script>    
     
             var map_999025018c754b09b148f1116f56b25e = L.map(
@@ -343,4 +313,14 @@
         .text('State Recession Probability');
 </script>
 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-54745637-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
 </html>
