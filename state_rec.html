@@ -97,11 +97,18 @@
         
     <div class="personal">
       <div class="container">
-          <li>Note: 3/21/2019 </li>
+          <li>Note: 1/26/2021 </li>
+            <ul>
+                <li>Coinciding with the December 2020 release, I updated the model in the following ways: </li>
+                <li>While performing estimation for each state, I do not censor the values between 2/2020 and 9/2020. In this period I allow for all parameters of the model (except recession and expansion persistence) to change. </li>
+                <li>Starting in 10/2020, all parameters return to normal, except for the variance of the error term, which is assumed to change again starting in 10/2020. In states where employment has been volatile over the past few months, this will have the effect of attributing this to excess volatility rather than to a double-dip recession (see Minnesota, for example). </li>
+                <li>The model has never fit well in West Virginia. Looking at a time series plot of West Virginia employment growth, there are clearly many (10+) outliers in the data. For West Virginia only, outside of 2/20-9/20, I have set the model up to automatically detect outliers and include dummies for these time periods. The model now performs a bit better on the WV data. </li>
+            </ul>
+          <li>Note: 3/21/2020 </li>
             <ul>
                 <li>The state employment numbers released by the BLS on 3/16 for January 2020 include a substantial revision to the 2019 numbers. This had the effect of wiping away potential local recessions in Oklahoma and Wyoming. The size of this revision is typical, and in the past other small "recessions" have been washed away by the annual revision. </li>
                 <li>These numbers are backward looking. As of 3/21 we only have state level data through January 2020. However, I expect that in some states, the February 2020 employment numbers will show weakness, despite the strong national employment number for February. A widespread recession will almost certainly be clear in the March or April data, released in April or May. I will work under the assumption that a national recession began in February 2020 when producing the third graph below. </li>
-                <li>Reminder: Before the model is run, I censor outlier values. Therefore, the numbers reported for March and April in the Minnesota graph will likely be smaller than the true values. This censoring allows the model to capture both relatlively mild and severe recesssions. For an overview of the full methodology see the link below.</li>
+                <li>Reminder: Before the model is run, I censor outlier values. Therefore, the numbers reported for March and April in the Minnesota graph will likely be smaller than the true values. This censoring allows the model to capture both relatlively mild and severe recesssions. For an overview of the full methodology see the link above the graphs.</li>
             </ul>
           </div>
         </div>
