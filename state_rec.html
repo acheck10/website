@@ -1,121 +1,385 @@
 <!DOCTYPE html>
+<html>
 <head>
-    <style>html, body {position: relative;
-                    width: 90.0%;
-                    height: 90.0%;}</style>
-        
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Questrial">
-    <link href="http://s3.amazonaws.com/codecademy-content/courses/ltp/css/shift.css" rel="stylesheet">
-    <link rel="stylesheet" href="bootstrap.css">
-    <link rel="stylesheet" href="nav-bar.css">
-    <link rel="stylesheet" href="re-te-pe.css">
-    <title>State Recession Probabilities</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Same stylesheets as the rest of the site (state_rec.html) -->
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Questrial">
+  <link rel="stylesheet" href="bootstrap.css">
+  <link rel="stylesheet" href="nav-bar.css">
+  <link rel="stylesheet" href="re-te-pe.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <title>State Recession Probabilities</title>
+  <style>
+    /* Only what the shared stylesheets don't cover: the interactive widgets */
+    .app { max-width: 1100px; margin: 0 auto; padding: 0 15px 40px; font-family: Futura, Questrial, 'Century Gothic', sans-serif; }
+    /* map on top, charts below, at every width */
+    .app .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+    #tiles { max-width: 640px; margin: 0 auto; }
+    .app .box { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 14px; min-width: 0; }
+    .app h3 { font-size: 1em; margin: 0 0 12px; color: #5a5a5a; letter-spacing: .03em; }
+
+    /* tile map */
+    #tiles { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 3px; }
+    .tile { aspect-ratio: 1 / 1; border: 2px solid transparent; border-radius: 4px; cursor: pointer; padding: 0;
+            font: bold 13px/1.1 Futura, Questrial, 'Century Gothic', sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .tile small { font-weight: normal; font-size: 10px; opacity: .95; }
+    .tile:hover { outline: 2px solid #999; }
+    .tile:focus-visible { outline: 3px solid #00b0ff; }
+    .tile.sel { border-color: #000; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000; z-index: 1; }
+    .tile.cmp { border-style: dashed; border-color: #000; }
+    .legend { display: flex; align-items: center; gap: 8px; max-width: 640px; margin: 12px auto 0; font-size: 12px; color: #666; }
+    .legend .bar { flex: 1; height: 10px; border-radius: 5px;
+                   background: linear-gradient(90deg, #006400, #2e9e44, #f5a623, #e0302b, #8b0000); }
+    .help { font-size: 13px; color: #666; margin: 10px 0 0; text-align: center; }
+
+    /* controls and stats */
+    .controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; margin-bottom: 14px; }
+    .controls label { display: flex; flex-direction: column; font-size: 13px; color: #666; gap: 4px; font-weight: normal; margin: 0; }
+    .controls select { font: 15px Futura, Questrial, 'Century Gothic', sans-serif; padding: 6px 8px; border: 1px solid #ccc;
+                       border-radius: 4px; background: #fff; color: #333; min-width: 190px; }
+    .controls .check { flex-direction: row; align-items: center; gap: 7px; padding-bottom: 7px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+    @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+    .stat { border: 1px solid #ddd; border-radius: 4px; padding: 8px 10px; background: #fafafa; }
+    .stat .k { font-size: 12px; color: #666; }
+    .stat .v { font-size: 1.6em; font-weight: bold; color: #333; line-height: 1.2; }
+    .stat .v2 { font-size: 1.3em; font-weight: bold; color: #333; line-height: 1.4; display: flex; align-items: baseline; gap: 8px; }
+    .stat .v2 .tag { font-size: .6em; min-width: 1.9em; }
+    .stat .s { font-size: 12px; color: #888; }
+    #chart { width: 100%; height: 600px; }
+    @media (max-width: 600px) {
+      #chart { height: 520px; }
+      .tile { font-size: 10px; border-width: 1.5px; border-radius: 3px; }
+      .tile small { font-size: 8px; }
+      .controls label { flex: 1 1 140px; }
+      .controls select { min-width: 0; width: 100%; }
+    }
+    .app .note { font-family: Arial, sans-serif; font-size: 1em; color: #444; margin-top: 18px; }
+    .app .err { color: #b00020; padding: 20px; }
+  </style>
 </head>
-<body>    
-    <div class="nav">
-      <div class="container">
-        <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="research.html">Research</a></li>
-          <li><a href="teaching.html">Teaching</a></li>
-          <li><a href="state_rec.html">Recessions</a></li>
-          <!--<li><a target="_blank" href="Check_CV.pdf">CV</a></li>-->
-          <!--<li><a href="personal.html">Personal</a></li>-->
-          <!-- <li><a href="http://asymmetriceconomist.wordpress.com" target="_blank">Blog</a></li> -->
-        </ul>
+
+<body>
+  <div class="nav">
+    <div class="container">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="research.html">Research</a></li>
+        <li><a href="teaching.html">Teaching</a></li>
+        <li><a href="state_rec.html">Recessions</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="name">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <h1>Adam Check</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="heading">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-20">
+          <h1>Employment Recession Probabilities, US States</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="personal">
+    <div class="container">
+      <ul>
+        <li><a href="https://asymmetriceconomist.wordpress.com/2017/07/17/recession-probabilities-for-all-50-states/" target="_blank">Methodology</a></li>
+        <li><a href="ms_results.csv">Regime dependent growth rates and most recent recession probabilities (.csv)</a></li>
+        <li><a href="rec_probs.csv">Historical Recession Probabilities (.csv)</a></li>
+        <li>Disclaimer: This model and associated probabilities are mine alone and do not reflect the views of my employer. </li>
+        <li>Questions/Comments? Email me at acheck10 [at] gmail.com</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="app">
+    <p id="asof" style="font-size:1.6em; margin: 0 0 14px;">&nbsp;</p>
+
+    <div class="layout">
+      <div class="box">
+        <h3>CLICK A STATE</h3>
+        <div id="tiles" role="group" aria-label="States"></div>
+        <div class="legend"><span>0%</span><div class="bar"></div><span>100%</span></div>
+        <p class="help">Colored by current recession probability. Shift-click a second state to compare.</p>
+      </div>
+
+      <div class="box">
+        <div class="controls">
+          <label>State <select id="selState" aria-label="State"></select></label>
+          <label>Compare with <select id="selCmp" aria-label="Compare with"></select></label>
+          <label class="check"><input type="checkbox" id="chkCovid"> Show full range (incl. COVID and outliers)</label>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="k">Recession probability</div><div id="stProb"></div><div class="s" id="stProbS"></div></div>
+          <div class="stat"><div class="k">Growth in expansion</div><div id="stExp"></div><div class="s">per year</div></div>
+          <div class="stat"><div class="k">Growth in recession</div><div id="stRec"></div><div class="s">per year</div></div>
+          <div class="stat"><div class="k">Months in recession</div><div id="stShare"></div><div class="s" id="stShareS"></div></div>
+        </div>
+        <div id="chart"></div>
       </div>
     </div>
 
-       <div class="name">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-4">
-            <h1>Adam Check</h1>
-            <!--<p>University of St. Thomas</p>-->
-          </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <p class="note">
+      The recession probability is the model's estimate that a state's payroll employment growth in a given month came from its
+      low-growth ("recession") regime, from a Bayesian two-regime Markov-switching model fit separately to each state's monthly employment growth.
+      In the single-state view, orange shading marks months with a probability of 50% or more; gray bands are NBER national recessions.
+      It is a coincident nowcast of the labor market, not a forecast, and the most recent months can be revised as new data arrive.
+    </p>
 
-        <div class ="heading">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-20">
-            <h1>Employment Recession Probabilities, US States</h1>
-        </div>
-        </div>
-      </div>
+    <div class="box" style="margin-top: 20px; text-align: center;">
+      <h3 style="text-align: left;">ALL STATES</h3>
+      <img src="employment_recession_probabilities_joy.png" alt="Probability of employment recession by state, 1990 to present" style="max-width: 100%; height: auto;">
     </div>
+  </div>
 
-      <div class="personal">
-      <div class="container">
-        <ul>
-          <li><a href="https://asymmetriceconomist.wordpress.com/2017/07/17/recession-probabilities-for-all-50-states/" target="_blank">Methodology</a></li>
-          <li><a href="ms_results.csv">Regime dependent growth rates and most recent recession probabilities (.csv)</a></li>
-          <li><a href="rec_probs.csv">Historical Recession Probabilities (.csv)</a></li>
-          <li>Disclaimer: This model and associated probabilities are mine alone and do not reflect the views of my employer. </li>
-          <li>Questions/Comments? Email me at acheck10 [at] gmail.com</li>
-        </ul>
-      </div>
-    </div>
-    
-    <div class ="personal">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-20">
-          <div class="thumbnail">
-                <img src="MN.png"/>
-          </div>
-        </div>
-        </div>
-      </div>
-    </div>
-
-    <object data="US_state_tooltip.html" 
-    position="relative" 
-    width="90.0%"
-    height="90.0%"
-    left= "0.0%"
-    top="0.0%"
-    margin-right="auto"
-    margin-left="auto"
-    padding-left="15px"
-    padding-right="15px"> </object>
-
-    <div class ="personal">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-20">
-          <div class="thumbnail">
-                <img src="employment_recession_probabilities_joy.png"/>
-          </div>
-        </div>
-        </div>
-      </div>
-    </div>
-        
-    <div class="personal">
-      <div class="container">
-          <li>Note: 1/26/2021 </li>
-            <ul>
+  <div class="personal">
+    <div class="container">
+      <ul>
+        <li>Note: 1/26/2021
+<ul>
                 <li>Coinciding with the December 2020 release, I updated the model in the following ways: </li>
                 <li>While performing estimation for each state, I do not censor the values between 2/2020 and 9/2020. In this period I allow for all parameters of the model (except recession and expansion persistence) to change. </li>
                 <li>Starting in 10/2020, all parameters return to normal, except for the variance of the error term, which is assumed to change again starting in 10/2020. In states where employment has been volatile over the past few months, this will have the effect of attributing this to excess volatility rather than to a double-dip recession (see Minnesota, for example). </li>
                 <li>The model has never fit well in West Virginia. Looking at a time series plot of West Virginia employment growth, there are clearly many (10+) outliers in the data. For West Virginia only, outside of 2/20-9/20, I have set the model up to automatically detect outliers and include dummies for these time periods. The model now performs a bit better on the WV data. </li>
-            </ul>
-          <li>Note: 3/21/2020 </li>
-            <ul>
+            </ul></li>
+          <li>Note: 3/21/2020
+<ul>
                 <li>The state employment numbers released by the BLS on 3/16 for January 2020 include a substantial revision to the 2019 numbers. This had the effect of wiping away potential local recessions in Oklahoma and Wyoming. The size of this revision is typical, and in the past other small "recessions" have been washed away by the annual revision. </li>
                 <li>These numbers are backward looking. As of 3/21 we only have state level data through January 2020. However, I expect that in some states, the February 2020 employment numbers will show weakness, despite the strong national employment number for February. A widespread recession will almost certainly be clear in the March or April data, released in April or May. I will work under the assumption that a national recession began in February 2020 when producing the third graph below. </li>
                 <li>Reminder: Before the model is run, I censor outlier values. Therefore, the numbers reported for March and April in the Minnesota graph will likely be smaller than the true values. This censoring allows the model to capture both relatlively mild and severe recesssions. For an overview of the full methodology see the link above the graphs.</li>
-            </ul>
-          </div>
-        </div>
+            </ul></li>
+      </ul>
+    </div>
+  </div>
 
-</body>
+<script>
+const NAMES = {AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',
+DC:'District of Columbia',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',
+KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',
+MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',
+NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',
+SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',
+WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+// [column, row] of each state in the tile-grid map
+const GRID = {AK:[1,1],ME:[12,1],VT:[11,2],NH:[12,2],
+WA:[2,3],ID:[3,3],MT:[4,3],ND:[5,3],MN:[6,3],IL:[7,3],WI:[8,3],MI:[9,3],NY:[10,3],MA:[11,3],
+OR:[2,4],NV:[3,4],WY:[4,4],SD:[5,4],IA:[6,4],IN:[7,4],OH:[8,4],PA:[9,4],NJ:[10,4],CT:[11,4],RI:[12,4],
+CA:[2,5],UT:[3,5],CO:[4,5],NE:[5,5],MO:[6,5],KY:[7,5],WV:[8,5],VA:[9,5],MD:[10,5],DE:[11,5],
+AZ:[3,6],NM:[4,6],KS:[5,6],AR:[6,6],TN:[7,6],NC:[8,6],SC:[9,6],DC:[10,6],
+OK:[5,7],LA:[6,7],MS:[7,7],AL:[8,7],GA:[9,7],HI:[1,8],TX:[5,8],FL:[10,8]};
+// NBER recession dates (peak month start to trough month end)
+const NBER = [['1990-07-01','1991-03-31'],['2001-03-01','2001-11-30'],['2007-12-01','2009-06-30'],['2020-02-01','2020-04-30']];
+const COVID = ['2020-03-01','2020-09-30'];
+// Same palette as the site's existing charts (matplotlib defaults)
+const BLUE = '#1f77b4', ORANGE = '#ff7f0e', PURPLE = '#8904B1', INK = '#333', GRAY = '#666', GRID_C = '#e6e6e6';  // PURPLE = the site's accent color for the second state
+const FONT = "Futura, Questrial, 'Century Gothic', sans-serif";
 
+let dates = [], P = {}, G = {}, MS = {}, sel = 'MN', cmp = '';
+
+const pct = (x, d=0) => (x*100).toFixed(d) + '%';
+const fmtMonth = s => new Date(s + 'T00:00:00').toLocaleDateString('en-US', {month:'long', year:'numeric'});
+const nextMonth = s => { const d = new Date(s + 'T00:00:00'); d.setMonth(d.getMonth() + 1); return d.toISOString().slice(0,10); };
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).map(l => l.split(','));
+  return {hdr: lines[0], rows: lines.slice(1)};
+}
+async function fetchText(u) {
+  const r = await fetch(u);
+  if (!r.ok) throw new Error('Could not load ' + u + ' (' + r.status + ')');
+  return r.text();
+}
+
+// green -> orange -> red color scale (0 to 1), as on the existing recession map
+const STOPS = [[0,[0,100,0]],[.25,[46,158,68]],[.5,[245,166,35]],[.75,[224,48,43]],[1,[139,0,0]]];
+function colorFor(p) {
+  p = Math.max(0, Math.min(1, p));
+  for (let i = 1; i < STOPS.length; i++) {
+    if (p <= STOPS[i][0]) {
+      const [p0,c0] = STOPS[i-1], [p1,c1] = STOPS[i], t = (p - p0) / (p1 - p0);
+      return c0.map((v,k) => Math.round(v + (c1[k] - v) * t));
+    }
+  }
+  return STOPS[STOPS.length-1][1];
+}
+const textOn = rgb => (0.299*rgb[0] + 0.587*rgb[1] + 0.114*rgb[2]) > 150 ? '#111' : '#fff';
+
+function buildTiles() {
+  const el = document.getElementById('tiles'); el.innerHTML = '';
+  Object.keys(GRID).forEach(st => {
+    const p = P[st][P[st].length - 1], rgb = colorFor(p);
+    const b = document.createElement('button');
+    b.className = 'tile'; b.dataset.st = st;
+    b.style.gridColumn = GRID[st][0]; b.style.gridRow = GRID[st][1];
+    b.style.background = `rgb(${rgb})`; b.style.color = textOn(rgb);
+    b.title = `${NAMES[st]}: ${pct(p)} recession probability`;
+    b.innerHTML = `${st}<small>${pct(p)}</small>`;
+    b.addEventListener('click', e => { e.shiftKey ? setCmp(st === sel ? '' : st) : setSel(st); revealChart(); });
+    el.appendChild(b);
+  });
+}
+// After a click on the map, scroll the chart panel into view if it is below the fold.
+// Set AUTO_SCROLL to false to turn this off.
+const AUTO_SCROLL = true;
+function revealChart() {
+  if (!AUTO_SCROLL) return;
+  const box = document.querySelector('.controls').parentElement, r = box.getBoundingClientRect();
+  if (r.top > window.innerHeight * 0.6) window.scrollTo({top: window.scrollY + r.top - 16, behavior: 'smooth'});
+}
+function markTiles() {
+  document.querySelectorAll('.tile').forEach(t => {
+    t.classList.toggle('sel', t.dataset.st === sel);
+    t.classList.toggle('cmp', t.dataset.st === cmp);
+  });
+}
+function buildSelects() {
+  const names = Object.keys(NAMES).sort((a,b) => NAMES[a].localeCompare(NAMES[b]));
+  const s = document.getElementById('selState'), c = document.getElementById('selCmp');
+  s.innerHTML = names.map(k => `<option value="${k}">${NAMES[k]}</option>`).join('');
+  c.innerHTML = '<option value="">(none)</option>' + names.map(k => `<option value="${k}">${NAMES[k]}</option>`).join('');
+  s.addEventListener('change', () => setSel(s.value));
+  c.addEventListener('change', () => setCmp(c.value));
+  document.getElementById('chkCovid').addEventListener('change', draw);
+}
+function setSel(st) { sel = st; if (cmp === st) cmp = ''; sync(); }
+function setCmp(st) { cmp = (st === sel) ? '' : st; sync(); }
+function sync() {
+  document.getElementById('selState').value = sel;
+  document.getElementById('selCmp').value = cmp;
+  history.replaceState(null, '', '#' + sel + (cmp ? ',' + cmp : ''));
+  markTiles(); updateStats(); draw();
+}
+
+// The cards show one value for a single state, or one row per state (tagged in the line colors) when comparing
+function updateStats() {
+  const two = !!cmp, sts = two ? [sel, cmp] : [sel], cols = [BLUE, PURPLE];
+  const fill = (id, f) => {
+    document.getElementById(id).innerHTML = sts.map((st, i) => two
+      ? `<div class="v2"><span class="tag" style="color:${cols[i]}">${st}</span><span>${f(st)}</span></div>`
+      : `<div class="v">${f(st)}</div>`).join('');
+  };
+  const nRec = st => P[st].filter(x => x >= 0.5).length;
+  fill('stProb', st => pct(P[st][P[st].length - 1]));
+  fill('stExp', st => MS[st].exp.toFixed(1) + '%');
+  fill('stRec', st => MS[st].rec.toFixed(1) + '%');
+  fill('stShare', st => pct(nRec(st) / P[st].length));
+  document.getElementById('stProbS').textContent = 'as of ' + fmtMonth(dates[dates.length - 1]);
+  document.getElementById('stShareS').textContent = two ? 'of months with p ≥ 50%'
+    : `${nRec(sel)} of ${P[sel].length} months (p ≥ 50%)`;
+}
+
+function covidMask() { return dates.map(d => d >= COVID[0] && d <= COVID[1]); }
+// runs of consecutive months with probability >= 50%, as [startIndex, endIndex]
+function regimeRuns(p) {
+  const runs = []; let s = null;
+  for (let i = 0; i < p.length; i++) {
+    if (p[i] >= 0.5) { if (s === null) s = i; }
+    else if (s !== null) { runs.push([s, i - 1]); s = null; }
+  }
+  if (s !== null) runs.push([s, p.length - 1]);
+  return runs;
+}
+
+function draw() {
+  const showCovid = document.getElementById('chkCovid').checked;
+  const states = cmp ? [sel, cmp] : [sel], cols = [BLUE, PURPLE];
+  const traces = [];
+  // One legend entry per state: the growth and probability lines of a state share a legend group
+  states.forEach((st, i) => {
+    traces.push({x: dates, y: G[st], name: NAMES[st], legendgroup: st, type: 'scatter', mode: 'lines',
+      line: {color: cols[i], width: 1.2}, xaxis: 'x', yaxis: 'y',
+      hovertemplate: '%{y:.1f}%<extra>' + st + ' growth</extra>'});
+  });
+  if (!cmp) {
+    const ms = MS[sel];
+    const fit = P[sel].map(p => (1 - p) * ms.exp + p * ms.rec);
+    traces.push({x: dates, y: fit, name: 'Expected growth (probability-weighted)', type: 'scatter', mode: 'lines',
+      line: {color: ORANGE, width: 2}, xaxis: 'x', yaxis: 'y',
+      hovertemplate: '%{y:.1f}%<extra>expected growth</extra>'});
+  }
+  states.forEach((st, i) => {
+    traces.push({x: dates, y: P[st], name: NAMES[st], legendgroup: st, showlegend: false, type: 'scatter', mode: 'lines',
+      line: {color: cols[i], width: 1.6}, xaxis: 'x2', yaxis: 'y2',
+      hovertemplate: '%{y:.0%}<extra>' + st + ' probability</extra>'});
+  });
+  // Growth-panel y-range. Default: ignore the COVID months and the most extreme 1% of values on each side,
+  // so the typical month-to-month movement fills the panel (extremes are clipped; zoom or tick the box to see them).
+  const mask = covidMask(); let vals = [];
+  states.forEach(st => G[st].forEach((v, k) => { if (showCovid || !mask[k]) vals.push(v); }));
+  vals.sort((a, b) => a - b);
+  let lo = vals[0], hi = vals[vals.length - 1];
+  if (!showCovid) { lo = vals[Math.floor(0.01 * vals.length)]; hi = vals[Math.ceil(0.99 * vals.length) - 1]; }
+  lo = Math.min(lo, 0); hi = Math.max(hi, 0);
+  const pad = (hi - lo) * 0.08;
+  const last = dates[dates.length - 1];
+  // NBER recessions in gray across both panels
+  const shapes = NBER.map(([a, b]) => ({type: 'rect', xref: 'x', yref: 'paper', x0: a, x1: b, y0: 0, y1: 1,
+    fillcolor: 'rgba(128,128,128,0.25)', line: {width: 0}, layer: 'below'}));
+  // months the model calls a state recession, in orange on the growth panel (single-state view only)
+  if (!cmp) regimeRuns(P[sel]).forEach(([s, e]) => shapes.push({type: 'rect', xref: 'x', yref: 'y domain',
+    x0: dates[s], x1: dates[e + 1] || nextMonth(dates[e]), y0: 0, y1: 1, fillcolor: 'rgba(255,127,14,0.28)', line: {width: 0}, layer: 'below'}));
+  shapes.push({type: 'line', xref: 'x2', yref: 'y2', x0: dates[0], x1: last, y0: 0.5, y1: 0.5,
+    line: {color: GRAY, width: 1, dash: 'dot'}});
+  const layout = {
+    paper_bgcolor: '#fff', plot_bgcolor: '#fff', font: {family: FONT, color: INK, size: 13},
+    margin: {l: 56, r: 14, t: 66, b: 40}, hovermode: 'x unified', showlegend: true,
+    legend: {orientation: 'h', x: 0, y: 1.12, yanchor: 'bottom', font: {size: 13}},
+    // the range buttons sit just above the first (growth) panel; the second panel follows through `matches`
+    xaxis: {domain: [0, 1], anchor: 'y', matches: 'x2', showticklabels: false, gridcolor: GRID_C,
+      rangeselector: {buttons: [{count: 10, label: '10y', step: 'year', stepmode: 'backward'},
+                                {count: 20, label: '20y', step: 'year', stepmode: 'backward'},
+                                {step: 'all', label: 'All'}], bgcolor: '#f3f3f3', activecolor: '#ddd', x: 0, y: 1.01, yanchor: 'bottom'}},
+    yaxis: {domain: [0.56, 1], anchor: 'x', title: {text: 'Annualized growth (%)'}, range: [lo - pad, hi + pad],
+            zeroline: true, zerolinecolor: '#000', zerolinewidth: 1, gridcolor: GRID_C},
+    xaxis2: {domain: [0, 1], anchor: 'y2', gridcolor: GRID_C, range: [dates[0], last]},
+    yaxis2: {domain: [0, 0.4], anchor: 'x2', range: [0, 1.02], tickformat: '.0%', title: {text: 'Recession probability'}, gridcolor: GRID_C},
+    shapes
+  };
+  Plotly.react('chart', traces, layout, {responsive: true, displaylogo: false,
+    modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d']});
+}
+
+async function init() {
+  try {
+    const [pt, gt, mt] = await Promise.all([fetchText('rec_probs.csv'), fetchText('growth.csv'), fetchText('ms_results.csv')]);
+    const pc = parseCSV(pt), gc = parseCSV(gt);
+    dates = pc.rows.map(r => r[0]);
+    pc.hdr.slice(1).forEach((st, j) => { P[st] = pc.rows.map(r => parseFloat(r[j + 1])); });
+    gc.hdr.slice(1).forEach((st, j) => { G[st] = gc.rows.map(r => parseFloat(r[j + 1])); });
+    parseCSV(mt).rows.forEach(r => { MS[r[0]] = {exp: parseFloat(r[1]), rec: parseFloat(r[2])}; });
+    document.getElementById('asof').textContent = fmtMonth(dates[dates.length - 1]);
+    buildTiles(); buildSelects();
+    const h = decodeURIComponent(location.hash.slice(1)).split(',');
+    if (NAMES[h[0]]) sel = h[0];
+    if (h[1] && NAMES[h[1]] && h[1] !== sel) cmp = h[1];
+    sync();
+    // react to back/forward and to edits of the #XX or #XX,YY part of the URL
+    window.addEventListener('hashchange', () => {
+      const h = decodeURIComponent(location.hash.slice(1)).split(',');
+      const s = NAMES[h[0]] ? h[0] : sel, c = (h[1] && NAMES[h[1]] && h[1] !== s) ? h[1] : '';
+      if (s !== sel || c !== cmp) { sel = s; cmp = c; sync(); }
+    });
+  } catch (e) {
+    console.error(e);
+    document.querySelector('.app').insertAdjacentHTML('afterbegin',
+      '<p class="err">Sorry, the data could not be loaded. Please try again later.</p>');
+  }
+}
+init();
+</script>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -126,4 +390,5 @@
   ga('send', 'pageview');
 
 </script>
+</body>
 </html>
