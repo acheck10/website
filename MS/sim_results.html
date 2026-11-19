@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Markov-Switching Mean vs. Quantile: Simulation Results</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="sim_page_data.js"></script>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1d2430; --muted:#6b7585; --line:#e2e6ec; --accent:#e8833a; --blue:#4a7bb7; --purple:#7a4fb5; --good:#2e8b57; --warn:#d9a21b; --bad:#c0392b; --none:#b4bcc8; --band:rgba(120,130,150,.22); --link:#2f6fb0; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#141820; --card:#1c222d; --ink:#e8ecf2; --muted:#9aa5b6; --line:#2a3240; --band:rgba(160,170,190,.2); --link:#7db3e8; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif; }
+  header { background:var(--card); border-bottom:1px solid var(--line); padding:10px 16px 0; }
+  .brand { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; } .brand h1 { font-size:18px; margin:0; font-weight:650; } .brand span { color:var(--muted); font-size:12px; }
+  .tabs { display:flex; gap:4px; margin-top:8px; overflow-x:auto; } .tabs a { padding:8px 14px; border-radius:8px 8px 0 0; color:var(--muted); text-decoration:none; font-weight:600; white-space:nowrap; border:1px solid transparent; border-bottom:none; }
+  .tabs a.cur { color:var(--ink); background:var(--bg); border-color:var(--line); }
+  .toolbar { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px; display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--card); } .seg button { border:0; background:none; color:var(--ink); padding:6px 12px; font:inherit; cursor:pointer; }
+  .seg button.on { background:var(--ink); color:var(--card); } .tl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-right:6px; }
+  .chip { border:1px solid var(--line); border-radius:999px; padding:4px 10px; background:var(--card); color:var(--ink); font:inherit; font-size:12px; cursor:pointer; } .chip.on { border-color:var(--accent); background:rgba(232,131,58,.14); } .chip.na { opacity:.45; }
+  main { display:grid; grid-template-columns:340px minmax(0,1fr); gap:14px; padding:14px 16px 20px; max-width:1400px; margin:0 auto; }
+  @media (max-width:900px) { main { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; } .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:0; padding:12px 14px 6px; font-weight:650; }
+  .models { max-height:calc(100vh - 110px); overflow:auto; position:sticky; top:56px; align-self:start; } @media (max-width:900px) { .models { position:static; max-height:460px; } }
+  .hint { padding:0 14px 4px; font-size:11px; color:var(--muted); }
+  .grp { padding:8px 14px 2px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  .row { display:grid; grid-template-columns:22px 1fr 86px 14px; gap:8px; align-items:center; padding:6px 14px; cursor:pointer; border-left:3px solid transparent; } .row:hover { background:rgba(120,130,150,.08); }
+  .row.sel { background:rgba(232,131,58,.10); border-left-color:var(--accent); } .row.sel2 { background:rgba(122,79,181,.10); border-left-color:var(--purple); }
+  .row .nm { font-weight:550; } .row .nm small { color:var(--muted); font-weight:400; } .row input:disabled { opacity:.45; cursor:not-allowed; }
+  .bar { display:block; height:8px; border-radius:4px; background:var(--line); position:relative; overflow:hidden; } .bar i { position:absolute; left:0; top:0; bottom:0; background:var(--blue); border-radius:4px; } .row .v { font-size:11px; color:var(--muted); text-align:right; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; } .dot.g { background:var(--good); } .dot.a { background:var(--warn); } .dot.r { background:var(--bad); } .dot.n { border:1.5px solid var(--none); }
+  .slw { padding:2px 14px 10px 39px; } .slw .lab { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:3px; } .slw .lab b { color:var(--ink); }
+  .dual { position:relative; height:24px; } .dual .trk { position:absolute; left:0; right:0; top:6px; height:12px; border-radius:6px; border:1px solid var(--line); }
+  .dual input { position:absolute; left:0; top:0; width:100%; height:24px; margin:0; background:transparent; -webkit-appearance:none; appearance:none; pointer-events:none; outline:none; }
+  .dual input::-webkit-slider-runnable-track { height:24px; background:transparent; } .dual input::-moz-range-track { background:transparent; }
+  .dual input::-webkit-slider-thumb { -webkit-appearance:none; pointer-events:auto; cursor:pointer; width:16px; height:22px; margin-top:1px; border-radius:5px; background:var(--c); border:2px solid var(--card); box-shadow:0 0 0 1px var(--c); }
+  .dual input::-moz-range-thumb { pointer-events:auto; cursor:pointer; width:14px; height:20px; border-radius:5px; background:var(--c); border:2px solid var(--card); }
+  .addtau { background:none; border:0; padding:0; font:inherit; font-size:11px; color:var(--link); cursor:pointer; text-decoration:underline; }
+  .right { display:flex; flex-direction:column; gap:14px; min-width:0; }
+  .head { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:baseline; padding:12px 14px 0; } .head h3 { margin:0; font-size:17px; }
+  .status { font-size:12px; padding:3px 10px; border-radius:999px; border:1px solid var(--line); display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; padding:4px 14px; font-size:12px; color:var(--muted); } .legend b { display:inline-block; width:16px; height:3px; vertical-align:middle; margin-right:5px; border-radius:2px; }
+  #chart { height:640px; } @media (max-width:700px) { #chart { height:520px; } }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px 14px; } @media (max-width:700px) { .stats { grid-template-columns:repeat(2,1fr); } }
+  .stat { border:1px solid var(--line); border-radius:10px; padding:8px 12px; } .stat .k { font-size:11px; color:var(--muted); } .stat .v { font-size:24px; font-weight:700; } .stat .d { font-size:11px; color:var(--muted); }
+  .ptabs { display:flex; gap:2px; padding:0 14px; border-bottom:1px solid var(--line); overflow-x:auto; } .ptabs button { border:0; background:none; color:var(--muted); padding:10px 14px; font:inherit; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; }
+  .ptabs button.on { color:var(--ink); border-bottom-color:var(--accent); } .pane { padding:12px 14px 16px; }
+  .note { font-size:13px; color:var(--muted); margin:6px 14px 0; } .warn { background:rgba(232,131,58,.12); border:1px solid rgba(232,131,58,.4); border-radius:8px; padding:8px 12px; font-size:13px; margin:8px 14px 0; }
+  #warn { padding-bottom:10px; }
+  table { border-collapse:collapse; width:100%; font-size:12.5px; } th, td { padding:5px 8px; text-align:right; border-bottom:1px solid var(--line); } th:first-child, td:first-child { text-align:left; }
+  th { font-weight:700; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.04em; } .tblw { overflow-x:auto; }
+  tbody tr { cursor:pointer; } tbody tr:hover { background:rgba(120,130,150,.08); } tr.sel td { background:rgba(232,131,58,.12); font-weight:700; } tr.sel2 td { background:rgba(122,79,181,.12); font-weight:700; }
+  table.small tbody tr { cursor:default; } table.small { font-size:12px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 10px; } .cchip { border:1px solid var(--line); border-radius:14px; padding:3px 11px; font-size:12px; background:var(--card); }
+  .cchip.g { border-color:#8bb04a; } .cchip.a { border-color:#e0a030; background:rgba(224,160,48,.14); } .cchip.r { border-color:#d9534f; background:rgba(217,83,79,.14); }
+  .girgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:12px; margin-top:12px; } .girgrid figure { margin:0; } .girgrid img { width:100%; border:1px solid var(--line); border-radius:6px; background:#fff; } .girgrid figcaption { font-size:12px; margin-bottom:4px; }
+  .rg { color:var(--good); } .ra { color:#b97a10; font-weight:700; } .rr { color:var(--bad); font-weight:700; }
+  .cols2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; } @media (max-width:800px) { .cols2 { grid-template-columns:1fr; } }
+  .eq { font-family:Georgia,"Times New Roman",serif; font-size:14.5px; background:rgba(120,130,150,.1); border-left:3px solid var(--accent); padding:6px 12px; margin:6px 0; overflow-x:auto; }
+  .mi-h { font-size:17px; font-weight:500; margin:4px 0 4px; } .mi-p { font-size:13px; margin:5px 0; } .mi-y { color:var(--muted); }
+  .mi-step { border:1px dashed var(--line); border-radius:6px; padding:6px 12px 8px; margin-bottom:10px; font-size:13px; }
+  .mname { margin:14px 0 4px; font-weight:650; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.05em; } .mname:first-child { margin-top:0; }
+  footer { max-width:1400px; margin:0 auto; padding:0 16px 40px; font-size:13px; color:var(--muted); } footer details { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 14px; }
+  footer summary { cursor:pointer; font-weight:650; color:var(--ink); } footer a { color:var(--link); } footer p { margin:8px 0; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><h1>Simulation results: regime models vs. the true regimes</h1><span>simulated data with known regimes · MS-mean · MS-quantile · Eo–Kim</span></div>
+  <div class="tabs"><a href="sim_results.html" class="cur">Simulations</a><a href="gdp_results.html">Real GDP</a><a href="dfm_results.html">Four-series factor</a><a href="eokim_results.html">Eo–Kim replication</a><a href="piger_results.html">Piger replication</a></div>
+</header>
+<div class="toolbar">
+  <span><span class="tl">Data</span><span class="seg" id="seg-sample"></span></span>
+  <span><span class="tl">Rank by</span><span class="seg" id="seg-metric"><button data-m="F1" class="on">F1</button><button data-m="AUC">AUC</button><button data-m="TPR">TPR</button><button data-m="Precision">Prec.</button><button data-m="FPR">FPR</button></span></span>
+  <span><span class="tl">Variant</span>
+    <button class="chip" id="chip-restr" title="">Restrict low mean &lt; 0</button>
+    <button class="chip" id="chip-drift" title="">Slow drift δ(t)</button></span>
+</div>
+<main>
+  <aside class="card models"><h2>Models <small style="font-weight:400;text-transform:none;letter-spacing:0">· click a row to view it</small></h2><div class="hint" id="hint"></div><div id="list"></div></aside>
+  <section class="right">
+    <div class="card">
+      <div class="head"><h3 id="title"></h3><span class="status" id="status"></span></div>
+      <div class="legend"><span><b style="background:var(--blue)"></b><span id="lg-series"></span></span><span><b style="background:var(--accent)"></b>first model</span><span><b style="background:var(--purple)"></b>comparison (second tick)</span><span><b style="background:var(--band);height:10px"></b><span id="lg-nber"></span></span><button class="chip" id="chip-full" title="" style="margin-left:auto">Full y-range</button></div>
+      <div id="chart"></div>
+      <p class="note" id="note"></p>
+      <div id="warn"></div>
+    </div>
+    <div class="card">
+      <div class="stats" id="stats"></div>
+      <div class="ptabs" id="ptabs"><button class="on" data-t="conv">Convergence</button><button data-t="model">Model &amp; priors</button><button data-t="table">All models</button><button data-t="gir" id="tab-gir" style="display:none">Getting it right</button></div>
+      <div class="pane" id="pane"></div>
+    </div>
+  </section>
+</main>
+<footer><details><summary>About the data and the models</summary><ul class="links">
+    <li><a href="#">Methodology</a> (Piger 2026, “Robust Identification of Business Cycle Turning Points”)</li>
+    <li><a href="R/ms_samplers.R">R code: Gibbs samplers for MSM and MSQ(τ)</a></li>
+    <li class="disc">Mock page. All data are simulated (700 months, two regimes); gray bands mark the <em>true</em> simulated recessions, standing in for NBER dates.</li>
+  </ul><p class="note"><b>MSM</b>: Hamilton-style switching mean, normal errors. <b>MSM-t</b>: same, but with Student-t errors (ν fixed at 5) (scale mixture; degrees of freedom drawn on a grid). <b>MSM-SV</b>: switching mean with stochastic volatility (a random-walk log-variance). <b>MSM-t-SV</b>: switching mean with both Student-t errors (ν fixed at 5) and stochastic volatility. <b>MSQ(τ)</b>: Piger's switching-quantile model with asymmetric-Laplace errors.</p><p class="disc"><b>Dynamic-factor data</b> (switch “Data” above): four series X<sub>i</sub> = ψ<sub>i</sub>·f + u<sub>i</sub> share one common factor f whose mean switches between regimes; a Bayesian one-factor model (AR(2) factor, unit innovation variance) estimates the factor, and every regime model is then fit to its posterior median, as in Piger (2026). The factor is on its own scale (the “true” regime means shown are averages of the estimated factor). Outliers are placed in the common factor, so they appear in all four series.</p><p class="disc"><b>Estimation.</b> Every model was fit with 8 chains per simulated dataset, from dispersed starting values, and the chains are pooled. The dot next to each model summarises how much the chains disagree about the Pr(low regime) path (green / amber / red; thresholds on the factor page and in the Convergence tab); parameter R̂ and ESS are shown as diagnostics. “Restrict low mean &lt; 0” and “Slow drift δ(t)” switch to the restricted and slow-drift fits.</p></details></footer>
+
+<!--MI_JS_START--><script>
+/* Model equations + estimation summaries, shared by the results pages. MI.html(kind, tau, ctx) -> HTML.
+   kind: msm | msmt | msmsv | msmtsv | msq | ek | ekx ; ctx: { ydesc, sv: "standard"|"collapsed", factor: bool, restr: bool, ek_scale } */
+window.MI = (function () {
+  const S0 = "S<sub>t</sub>", sub = (a, b) => a + "<sub>" + b + "</sub>";
+  const eq = t => '<div class="eq">' + t + "</div>";
+  const regime = ctx => eq("Pr(S<sub>t</sub> = 0 | S<sub>t−1</sub> = 0) = P<sub>00</sub>, &nbsp; Pr(S<sub>t</sub> = 1 | S<sub>t−1</sub> = 1) = P<sub>11</sub> &nbsp;&nbsp; (S<sub>t</sub> = 1 is the <b>low</b> regime)");
+  const TRN = ctx => ctx.trans || "P<sub>00</sub> ~ Beta(9, 1), P<sub>11</sub> ~ Beta(8, 2)";      // transition-probability priors follow the data frequency (set in the page's mi_ctx)
+  const SNOTE = ctx => ctx.pscale ? " (s and ȳ are the sample sd and mean of the series being modelled: the priors reduce to N(0.5, 1) and N(−0.5, 1) for a standardised series. Variances of per-period random walks are 4×10⁻⁴ s² per quarter, divided by 3 on monthly data)" : "";
+  const priors = ctx => ctx.drift ? "<b>Priors.</b> α<sub>1</sub> ~ N(" + (ctx.pscale ? "−1.25 s" : (ctx.a1prior || "−1.5")) + ", " + (ctx.pscale ? "s²" : "1") + ") truncated to α<sub>1</sub> &lt; 0 (α<sub>0</sub> is implied by the zero-mean split below); δ<sub>1</sub> ~ N(ȳ, " + (ctx.pscale ? "s²" : "0.5²") + "); " + TRN(ctx) + SNOTE(ctx) : "<b>Priors.</b> " + (ctx.pscale ? "α<sub>0</sub> ~ N(ȳ + 0.5 s, s²), α<sub>1</sub> ~ N(ȳ − 0.5 s, s²)" : "α<sub>0</sub> ~ N(0.5, 1), α<sub>1</sub> ~ N(−0.5, 1)") + " truncated to α<sub>1</sub> &lt; α<sub>0</sub>" + (ctx.restr ? " <b>and α<sub>1</sub> &lt; 0 (restriction switched on)</b>" : "") +
+    "; " + TRN(ctx) + SNOTE(ctx);
+  const svEq = eq("h<sub>t</sub> = h<sub>t−1</sub> + η<sub>t</sub>, &nbsp; η<sub>t</sub> ~ N(0, σ²<sub>η</sub>), &nbsp; h<sub>1</sub> ~ N(log var(y), 5); &nbsp; σ²<sub>η</sub> ~ IG(1, 0.01) (nearly flat)");
+  const step1 = ctx => ctx.factor ? '<div class="mi-step"><b>Step 1 (common to every model): the common factor.</b>' +
+    eq("X<sub>it</sub> = ψ<sub>i</sub> f<sub>t</sub> + u<sub>it</sub>, &nbsp; u<sub>it</sub> ~ N(0, σ²<sub>i</sub>), &nbsp; i = 1…4 &nbsp;&nbsp;|&nbsp;&nbsp; f<sub>t</sub> = φ<sub>1</sub> f<sub>t−1</sub> + φ<sub>2</sub> f<sub>t−2</sub> + e<sub>t</sub>, &nbsp; e<sub>t</sub> ~ N(0, 1), &nbsp; ψ<sub>1</sub> &gt; 0") +
+    "A Bayesian one-factor model fitted by Gibbs sampling (Durbin–Koopman simulation smoother for f, Metropolis for the AR coefficients with a persistence bound of 0.95). <b>Step 2</b> fits the model below to the posterior median of f, treated as the observed series y<sub>t</sub> (Piger's two-step approach).</div>" : "";
+  const sv_est = (ctx, t) => ctx.sv === "collapsed"
+    ? "<b>Estimation (collapsed-state sampler).</b> Each sweep first draws (α, P) by random-walk Metropolis with the regime path <i>integrated out</i> (Hamilton filter" + (t ? ", t density" : "") + "), then shifts blocks of the log-volatility path by Metropolis (again with S integrated out), then draws S by forward-filter backward-sample, α | S exactly (truncated normal), h | S by the Omori–Chib–Shephard–Nakajima 10-component mixture with a Carter–Kohn smoother" + (t ? ", λ<sub>t</sub> | S (ν = 5 fixed)" : "") + ", and σ²<sub>η</sub> | h (inverse gamma). Integrating S out of these blocks helps chains move between the recession and slow-growth modes (it does not fully solve it on every dataset; see the convergence panel). The sampler passes a Geweke joint-distribution test."
+    : "<b>Estimation (Gibbs).</b> S | α, h by forward-filter backward-sample; α | S, h" + (t ? ", λ" : "") + " exactly from a truncated normal; h | residuals by the Omori–Chib–Shephard–Nakajima 10-component mixture with a Carter–Kohn smoother; σ²<sub>η</sub> | h inverse gamma; P | S Beta" + (t ? "; λ<sub>t</sub> | S Gamma (ν = 5 fixed)" : "") + ". This standard sampler can move between modes slowly; see the convergence notes where shown.";
+  // MSM-RW-EC: random-walk regimes with error correction (Eo & Kim 2013 style), constant variance / t errors / stochastic volatility; toggles: random-walk long-run mean (drift) and the paper's sign restrictions.
+  const rwecBody = (ctx, t, sv) => { const dr = !!ctx.drift, rs = !!ctx.restr, nm = "MSM-RW-EC" + (t ? "-t" : "") + (sv ? "-SV" : "") + (dr ? " + drift" : "") + (rs ? " + sign restrictions" : "");
+    return ["Random-walk regimes with error correction, " + nm + "  (Eo &amp; Kim 2013-style)",
+      eq("y<sub>t</sub> = (1 − S<sub>t</sub>) μ*<sub>0t</sub> + S<sub>t</sub> μ*<sub>1t</sub> + δ<sub>t</sub> + " + (sv ? "exp(h<sub>t</sub>/2)" : "σ") + " ε<sub>t</sub>" + (t ? " / √λ<sub>t</sub>, &nbsp; λ<sub>t</sub> ~ Gamma(ν/2, ν/2)" : "")) +
+      eq("μ*<sub>jt</sub> = μ*<sub>j,t−1</sub> + 1(S<sub>t</sub> = j, S<sub>t−1</sub> ≠ j) · [ θ<sub>j</sub> (π<sub>0</sub> μ*<sub>0,t−1</sub> + π<sub>1</sub> μ*<sub>1,t−1</sub>) + ω<sub>jt</sub> ], &nbsp; ω<sub>jt</sub> ~ N(0, σ²<sub>ωj</sub>)") +
+      eq(dr ? "δ<sub>t</sub> = δ<sub>t−1</sub> + ε<sub>δ,t</sub>, ε<sub>δ,t</sub> ~ N(0, " + (ctx.s2d_ek || "0.0004") + ")" : "δ<sub>t</sub> = δ <i>(constant long-run mean)</i>") + (sv ? eq("h<sub>t</sub> = h<sub>t−1</sub> + η<sub>t</sub>, &nbsp; η<sub>t</sub> ~ N(0, σ²<sub>η</sub>)") : ""),
+      "<b>What it is.</b> Each regime has its own mean path μ*<sub>jt</sub>, constant within an episode and, when the economy enters regime j, moving toward the long-run mean at rate θ<sub>j</sub> plus an episode-specific shock, so successive booms and recessions need not be alike. " +
+        "Base model: constant error variance, constant long-run mean, no sign restrictions; the switches add the random-walk long-run mean δ<sub>t</sub> " + (dr ? "(on)" : "(off)") + " and the paper's sign restrictions μ*<sub>0t</sub> &gt; 0 &gt; μ*<sub>1t</sub> at every date " + (rs ? "(on)" : "(off)") + "; the Eo–Kim model of the paper is the SV version with both switched on.",
+      "<b>Priors.</b> θ<sub>j</sub> ~ N(−0.1, 0.25) with the stationarity restriction |1 + θ<sub>0</sub>π<sub>0</sub> + θ<sub>1</sub>π<sub>1</sub>| &lt; 1; σ²<sub>ωj</sub> ~ IG(5, " + (ctx.pscale ? "s²" : "1") + "); " + (sv ? "σ²<sub>η</sub> ~ IG(1, " + (ctx.eta_b || "0.01") + ") (nearly flat), h<sub>1</sub> ~ N(log var(y), 5); " : "σ² ~ IG(1, " + (ctx.pscale ? "s²/2" : "0.5") + "); ") + (t ? "ν = 5 fixed; " : "") +
+        "initial μ* ~ N(" + (ctx.pscale ? "±0.5 s, s²" : "±0.5, 1") + "), δ<sub>1</sub> ~ N(ȳ, " + (ctx.pscale ? "s²" : "1") + "); " + TRN(ctx) + SNOTE(ctx),
+      "<b>Estimation (paper-style Gibbs sampler).</b> (μ*, δ) paths | S by Carter–Kohn" + (rs ? " with the sign restrictions imposed by rejection" : "") + "; S one month at a time given the paths; " + (t ? "λ<sub>t</sub> | rest (Gamma); " : "") + "θ, σ²<sub>ω</sub> from the episode shocks; " + (sv ? "h by the Omori et al. mixture with a Carter–Kohn smoother and σ²<sub>η</sub> | h inverse gamma" : "σ² inverse gamma") + "; (q, p) from Beta draws. " +
+        (rs ? "" : "Without the sign restrictions the regime labels are not identified, so each retained draw is relabelled so that regime 0 is the higher-mean regime. ") +
+        "<b>Caveat:</b> this follows the paper's description, not an exact Gibbs sampler for the model as printed (the regime draw conditions on a mean path that depends on S); it fails the Getting-it-Right test (see the Eo–Kim replication page)."]; };
+  const body = {
+    msm: ctx => ["Markov-switching mean (Hamilton 1989)",
+      eq("y<sub>t</sub> = α<sub>S<sub>t</sub></sub> + σ ε<sub>t</sub>, &nbsp; ε<sub>t</sub> ~ N(0, 1)") + regime(ctx),
+      priors(ctx) + "; p(σ²) ∝ 1/σ².",
+      "<b>Estimation (Gibbs).</b> S | α, σ² by forward-filter backward-sample; α | S, σ² from a truncated normal (exact, so α<sub>1</sub> &lt; α<sub>0</sub> is part of the prior); σ² | α, S inverse gamma; P | S from Beta distributions. The recession probability is the posterior mean of 1(S<sub>t</sub> = 1).",
+      "Normal errors make the likelihood sensitive to outliers: one extreme observation (the 2020 collapse) can capture the low regime."],
+    msmt: ctx => ["MSM with Student-t errors",
+      eq("y<sub>t</sub> = α<sub>S<sub>t</sub></sub> + σ ε<sub>t</sub> / √λ<sub>t</sub>, &nbsp; ε<sub>t</sub> ~ N(0, 1), &nbsp; λ<sub>t</sub> ~ Gamma(ν/2, ν/2) &nbsp;⇒&nbsp; y<sub>t</sub> | S<sub>t</sub> ~ t<sub>ν</sub>(α<sub>S<sub>t</sub></sub>, σ²)") + regime(ctx),
+      priors(ctx) + "; ν fixed at 5; p(σ²) ∝ 1/σ².",
+      "<b>Estimation (Gibbs).</b> S is drawn with λ integrated out (t density), then λ<sub>t</sub> | S ~ Gamma((ν+1)/2, (ν + r<sub>t</sub>²/σ²)/2), with ν = 5 fixed; α | S, λ truncated normal; σ² inverse gamma; P | S Beta.",
+      "Heavy tails downweight outliers, so a single extreme month does not need its own regime."],
+    msmsv: ctx => ["MSM with stochastic volatility",
+      eq("y<sub>t</sub> = α<sub>S<sub>t</sub></sub> + exp(h<sub>t</sub>/2) ε<sub>t</sub>, &nbsp; ε<sub>t</sub> ~ N(0, 1)") + svEq + regime(ctx),
+      priors(ctx) + ".", sv_est(ctx, false),
+      "Volatility can absorb outliers and volatility regimes, which makes the regime means less well identified (a slow-growth, low-volatility mode competes with the recession mode)."],
+    msmtsv: ctx => ["MSM with Student-t errors and stochastic volatility",
+      eq("y<sub>t</sub> = α<sub>S<sub>t</sub></sub> + exp(h<sub>t</sub>/2) ε<sub>t</sub> / √λ<sub>t</sub>, &nbsp; ε<sub>t</sub> ~ N(0, 1), &nbsp; λ<sub>t</sub> ~ Gamma(ν/2, ν/2)") + svEq + regime(ctx),
+      priors(ctx) + "; ν fixed at 5.", sv_est(ctx, true), ""],
+    msq: (ctx, tau) => { const th = (1 - 2 * tau) / (tau * (1 - tau)), ps2 = 2 / (tau * (1 - tau)); return ["Markov-switching quantile model, MSQ(τ = " + tau.toFixed(2) + ")  (Piger 2026)",
+      eq("y<sub>t</sub> = α<sub>S<sub>t</sub></sub> + θ z<sub>t</sub> + ψ √(σ z<sub>t</sub>) v<sub>t</sub>, &nbsp; v<sub>t</sub> ~ N(0, 1), &nbsp; z<sub>t</sub> ~ Exp(mean σ)") +
+      eq("θ = (1 − 2τ) / (τ(1 − τ)) = " + th.toFixed(2) + ", &nbsp;&nbsp; ψ² = 2 / (τ(1 − τ)) = " + ps2.toFixed(2)) + regime(ctx),
+      "<b>What it estimates.</b> Integrating out z<sub>t</sub> gives an asymmetric-Laplace density, so α<sub>S<sub>t</sub></sub> is the <b>τ-th quantile</b> of y<sub>t</sub> within regime S<sub>t</sub> (τ = 0.5 is the regime <i>median</i>), not its mean. " + priors(ctx) + "; p(σ) ∝ 1/σ.",
+      "<b>Estimation (Gibbs).</b> The normal–exponential mixture makes every step conjugate: S | α, z by forward-filter backward-sample; α | S, z truncated normal; σ inverse gamma; z<sub>t</sub> | rest generalized inverse Gaussian (drawn through an inverse-Gaussian variate for 1/z<sub>t</sub>); P | S Beta.",
+      "The Laplace likelihood has linear, not quadratic, tails, so extreme observations have bounded influence; this is the source of its robustness to 2020. Different τ weight the tails of each regime differently, so they can pick different regimes."]; },
+    rwec: ctx => rwecBody(ctx, false, false), rwect: ctx => rwecBody(ctx, true, false), rwecsv: ctx => rwecBody(ctx, false, true), rwectsv: ctx => rwecBody(ctx, true, true),
+    ek: ctx => ["Eo &amp; Kim (2013): regime means that evolve across episodes — the paper's sampler",
+      eq("y<sub>t</sub> = (1 − S<sub>t</sub>) μ*<sub>0t</sub> + S<sub>t</sub> μ*<sub>1t</sub> + δ<sub>t</sub> + exp(h<sub>t</sub>/2) ε<sub>t</sub>") +
+      eq("μ*<sub>jt</sub> = μ*<sub>j,t−1</sub> + 1(S<sub>t</sub> = j, S<sub>t−1</sub> ≠ j) · [ θ<sub>j</sub> (π<sub>0</sub> μ*<sub>0,t−1</sub> + π<sub>1</sub> μ*<sub>1,t−1</sub>) + ω<sub>jt</sub> ], &nbsp; ω<sub>jt</sub> ~ N(0, σ²<sub>ωj</sub>)") +
+      eq("δ<sub>t</sub> = δ<sub>t−1</sub> + ε<sub>δ,t</sub>, ε<sub>δ,t</sub> ~ N(0, " + (ctx.s2d_ek || "0.0004") + ") &nbsp;&nbsp;|&nbsp;&nbsp; h<sub>t</sub> = h<sub>t−1</sub> + η<sub>t</sub> &nbsp;&nbsp;|&nbsp;&nbsp; π = ergodic probabilities of S"),
+      "Each regime has its own mean path μ*<sub>jt</sub>, which is constant within an episode and, when the economy enters regime j, moves toward the long-run mean at rate θ<sub>j</sub> (an error-correction term) plus a random shock; δ<sub>t</sub> is a random-walk long-run growth rate and h<sub>t</sub> a random-walk log volatility. <b>Priors:</b> θ<sub>j</sub> ~ N(−0.1, 0.25) with the stationarity restriction |1 + θ<sub>0</sub>π<sub>0</sub> + θ<sub>1</sub>π<sub>1</sub>| &lt; 1; σ²<sub>ωj</sub> ~ IG(5, " + (ctx.pscale ? "s²" : "1") + "); σ²<sub>η</sub> ~ IG(1, " + (ctx.eta_b || "0.01") + ") (nearly flat; the paper prints IG(4, 1), but its reported posterior and its own code contradict that); initial μ* ~ N(" + (ctx.pscale ? "±0.5 s, s²" : "±0.5, 1") + ")" + (ctx.pscale ? ", δ<sub>1</sub> ~ N(ȳ, s²)" : "") + "; transition probabilities (q = P<sub>00</sub>, p = P<sub>11</sub>) " + TRN(ctx) + "; hard sign restrictions μ*<sub>0t</sub> &gt; 0, μ*<sub>1t</sub> &lt; 0.",
+      "<b>Estimation (the paper's sampler).</b> (1) the (μ*, δ) paths | S by Carter–Kohn with the sign restrictions; (2) S<sub>t</sub> one month at a time given the paths; (3) θ, σ²<sub>ω</sub> and (q, p) from their conditionals; (4) h by the mixture sampler. Step 2 conditions on a μ* path that itself depends on S, so this is not an exact Gibbs sampler (see the exact variant).",
+      ctx.ek_scale ? ctx.ek_scale : ""],
+    ekc: ctx => { const b = body.ek(ctx); return ["Eo &amp; Kim (2013) with a <b>constant</b> error variance — the paper's sampler",
+      eq("y<sub>t</sub> = (1 − S<sub>t</sub>) μ*<sub>0t</sub> + S<sub>t</sub> μ*<sub>1t</sub> + δ<sub>t</sub> + σ<sub>e</sub> ε<sub>t</sub>, &nbsp; ε<sub>t</sub> ~ N(0, 1), &nbsp; σ²<sub>e</sub> constant ~ IG(1, 0.5)") +
+      eq("μ*<sub>jt</sub> = μ*<sub>j,t−1</sub> + 1(S<sub>t</sub> = j, S<sub>t−1</sub> ≠ j) · [ θ<sub>j</sub> (π<sub>0</sub> μ*<sub>0,t−1</sub> + π<sub>1</sub> μ*<sub>1,t−1</sub>) + ω<sub>jt</sub> ], &nbsp; ω<sub>jt</sub> ~ N(0, σ²<sub>ωj</sub>) &nbsp;&nbsp;|&nbsp;&nbsp; δ<sub>t</sub> = δ<sub>t−1</sub> + ε<sub>δ,t</sub>, ε<sub>δ,t</sub> ~ N(0, " + (ctx.s2d_ek || "0.0004") + ")"),
+      "Identical to the Eo–Kim model above (same priors on θ, σ²<sub>ωj</sub>, q, p, the same sign restrictions and the same sampler) except that the log-volatility random walk is removed: the error variance does not change over time. <b>Why it is here:</b> in my replication of the paper's stochastic-volatility model the recession probabilities come out lower than the paper's Figure 11, while with a constant variance they are close to the paper's. The constant-variance version cannot represent the Great Moderation, so its error variance is a single average.",
+      "<b>Estimation (the paper's sampler).</b> Same steps as above, with step (4) replaced by a plain inverse-gamma draw for σ²<sub>e</sub> given the residuals.",
+      ctx.ek_scale ? ctx.ek_scale : ""]; },
+    ekg: ctx => ["Eo &amp; Kim's own sampler (the authors' GAUSS code, ported to R)",
+      eq("y<sub>t</sub> = δ<sub>t</sub> + (1 − S<sub>t</sub>) μ*<sub>0t</sub> + S<sub>t</sub> μ*<sub>1t</sub> + e<sub>t</sub>, &nbsp; e<sub>t</sub> ~ N(0, B·exp(h<sub>t</sub>)), &nbsp; h<sub>1</sub> = 0, h<sub>t</sub> = h<sub>t−1</sub> + η<sub>t</sub>") +
+      eq("same regime-mean dynamics, θ and sign restrictions as the Eo–Kim model above; δ<sub>t</sub> a random walk with σ²<sub>ε</sub> ~ IG(5000, 2) (about " + (ctx.s2d_ek || "0.0004") + ")"),
+      "<b>What this tile is.</b> I found the authors' replication code (GAUSS) and ported it line by line. It is the model above estimated with <i>their</i> choices, which differ from the printed paper in ways that matter: " +
+      "<b>(1)</b> the prior on σ²<sub>η</sub> in the code is IG(5, 0.05) (mean 0.0125), not the printed IG(4, 1); " +
+      "<b>(2)</b> the initial variance is pinned (h<sub>1</sub> = 0, so σ²<sub>e,1</sub> = B with B ~ IG(5, 5)); " +
+      "<b>(3)</b> the regime path S is drawn jointly (Hamilton filter and backward sampling) given the mean path, with S<sub>1</sub> = S<sub>2</sub> = 0 and any draw with a recession share outside 20–80% rejected; " +
+      "<b>(4)</b> the chain starts at the NBER dates, with initial state N((1, −1, 0.9), I); " +
+      "<b>(5)</b> in non-switch periods the mean path is set to conditional means (the paper's backward rules).",
+      "<b>Caveats.</b> This sampler is not an exact Gibbs sampler for the printed model (the regime draw conditions on a mean path that depends on S, the 20–80% rule truncates the regime prior, the sign restrictions are enforced by rejection without correcting the other conditionals), so it fails a Geweke test; it is here because it reproduces the paper's published probabilities and volatility path. " +
+      (ctx.gauss_note || "") + " On real data the chain starts at the NBER dates (as in their code), so its probabilities are not independent of the NBER dating; on simulations it starts from a quantile partition.",
+      ""],
+    ekx: ctx => ["Eo &amp; Kim (2013) — exact sampler",
+      eq("y<sub>t</sub> = (1 − S<sub>t</sub>) μ*<sub>0t</sub> + S<sub>t</sub> μ*<sub>1t</sub> + δ<sub>t</sub> + exp(h<sub>t</sub>/2) ε<sub>t</sub>, &nbsp;&nbsp; same state equations and priors as the paper's version") ,
+      "Same model as above, but the paper's hard sign restrictions (μ*<sub>0t</sub> &gt; 0 &gt; μ*<sub>1t</sub> at every date, which hold with probability about 0.1% under the unrestricted posterior) are replaced by one exact restriction: the <b>time average</b> of the path μ*<sub>1t</sub> is negative. Paths are drawn by Carter–Kohn with rejection until it holds, and S is drawn with the same restriction built into the Kalman likelihood, so the sampler targets exactly the restricted posterior (it passes the Getting-it-Right test).",
+      "<b>Priors (differ from the paper's sampler).</b> σ²<sub>η</sub> ~ IG(5, 0.05), the prior in the authors' own code (the printed IG(4, 1) lets the volatility path absorb the recessions: the fitted low regime then covers about 40% of quarters instead of 15%), and σ²<sub>ω</sub> ~ IG(10, 0.45) (mean 0.05, so the regime means move little at a switch; the printed IG(5, 1) has mean 0.25). Everything else as above. This choice was made after looking at fits (see the write-up).",
+      "<b>Estimation (exact).</b> S<sub>t</sub> is drawn one quarter at a time, plus block moves for the regime path, with the (μ*, δ) paths <i>integrated out</i> by a Kalman-filter likelihood (C++); θ, σ²<sub>ω</sub> and (q, p) by random-walk Metropolis on the same collapsed likelihood; the paths by Carter–Kohn given S; h by the mixture sampler."]
+  };
+  return { html: function (kind, tau, ctx) {
+    const b = body[kind]; if (!b) return "";
+    let [title, ...rest] = b(ctx, tau);
+    if (ctx.drift && kind === "msq") {
+      title += " + slow drift (zero-mean split)";
+      rest[0] = rest[0].replace("y<sub>t</sub> = α<sub>S<sub>t</sub></sub> +", "y<sub>t</sub> = δ<sub>t</sub> + α<sub>S<sub>t</sub></sub> +");
+      rest.splice(1, 0, eq("δ<sub>t</sub> = δ<sub>t−1</sub> + ε<sub>δt</sub>, &nbsp; ε<sub>δt</sub> ~ N(0, " + (ctx.s2d || "0.0004") + ") <i>(fixed)</i>, &nbsp; δ<sub>1</sub> ~ N(ȳ, " + (ctx.pscale ? "s²" : "0.5²") + ")") +
+        eq("π<sub>0</sub> α<sub>0</sub> + π<sub>1</sub> α<sub>1</sub> = 0 &nbsp;⇒&nbsp; α<sub>0</sub> = −(π<sub>1</sub>/π<sub>0</sub>) α<sub>1</sub>") +
+        "<b>Slow drift added to the quantile model.</b> δ<sub>t</sub> is a slowly moving level (random walk, small fixed variance) and the regime offsets α<sub>0</sub>, α<sub>1</sub> are deviations from it with the same zero-mean split as the switching-mean drift models, so δ<sub>t</sub> is the long-run τ-quantile level around which the regimes sit. Given the latent z<sub>t</sub> the model is Gaussian in δ<sub>t</sub> with known variance ψ²σz<sub>t</sub>, so δ<sub>t</sub> | rest is a forward-filter backward-sample draw. (α<sub>1</sub>, P) are drawn with S and z integrated out (closed-form asymmetric-Laplace density, Hamilton filter), then S, z, α<sub>1</sub>, σ and δ in turn.");
+    }
+    if (ctx.drift && /^msm/.test(kind)) {
+      title += " + slow drift (zero-mean split)";
+      rest[0] = rest[0].replace("= α<sub>S<sub>t</sub></sub> +", "= δ<sub>t</sub> + α<sub>S<sub>t</sub></sub> +");
+      rest.splice(1, 0, eq("δ<sub>t</sub> = δ<sub>t−1</sub> + ε<sub>δt</sub>, &nbsp; ε<sub>δt</sub> ~ N(0, " + (ctx.s2d || "0.0004") + ") <i>(fixed)</i>, &nbsp; δ<sub>1</sub> ~ N(ȳ, " + (ctx.pscale ? "s²" : "0.5²") + ")") +
+        eq("π<sub>0</sub> α<sub>0</sub> + π<sub>1</sub> α<sub>1</sub> = 0 &nbsp;⇒&nbsp; α<sub>0</sub> = −(π<sub>1</sub>/π<sub>0</sub>) α<sub>1</sub> = −[(1 − P<sub>00</sub>)/(1 − P<sub>11</sub>)] α<sub>1</sub> &nbsp;(π = ergodic regime probabilities)"),
+        "<b>Slow drift (Eo &amp; Kim 2013).</b> δ<sub>t</sub> is a random-walk <b>unconditional long-run mean</b> with a small fixed variance, and the regime means are deviations from it that average to zero across regimes. That fixes the level split between α and δ, leaves α<sub>1</sub> as the only free regime parameter, and makes α<sub>1</sub> &lt; 0 (hence α<sub>0</sub> &gt; 0) the Eo–Kim sign restriction, which also fixes the labelling. The plain “restrict low-regime mean &lt; 0” switch is therefore not applicable. <b>Estimation differences:</b> α<sub>1</sub> and P enter the likelihood together (through α<sub>0</sub>), so (α<sub>1</sub>, P) are drawn jointly by Metropolis with the regime path integrated out; α<sub>1</sub> | S is a truncated normal; δ is drawn after each sweep by forward-filter backward-sample on z<sub>t</sub> = y<sub>t</sub> − μ(S<sub>t</sub>) = δ<sub>t</sub> + e<sub>t</sub>.");
+    }    const parts = rest.filter(x => x).map((x, i) => x.startsWith("<div class=\"eq\"") ? x : '<p class="mi-p">' + x + "</p>");
+    return step1(ctx) + "<h3 class=\"mi-h\">" + title + "</h3><p class=\"mi-p mi-y\">" + (ctx.ydesc || "y<sub>t</sub> is the series being modelled.") + "</p>" + parts.join("");
+  } };
+})();
+
+</script><!--MI_JS_END-->
+<script>
+(function () {
+  const CFG = {"data_js": "sim_page_data.js", "out": "sim_results", "cur": "sim", "sub": "simulated data with known regimes · MS-mean · MS-quantile · Eo–Kim", "default_sample": "uni_clean", "nber_word": "true recession", "axes": [{"label": "Data", "default": "uni", "options": {"uni": {"short": "Single series", "long": "Single simulated series"}, "df": {"short": "4 series → factor", "long": "Dynamic factor: 4 series → 1 factor"}}}, {"label": "Scenario", "default": "clean", "options": {"clean": {"short": "Clean", "long": "Clean data (no outlier recession)"}, "mild": {"short": "Mild outlier", "long": "Mild outlier recession (3 months)"}, "severe": {"short": "Pandemic-style", "long": "Pandemic-style outlier recession (2 months, extreme)"}}}], "unit": "", "dec": 2, "clip": [-3, 2.2], "clip_why": "outliers", "series_name": "Simulated growth", "series_short": "series", "ytitle": "Simulated series", "sd_ticks": null, "capture": null, "period": "month", "truth_word": "true", "no_diag": "No convergence diagnostics for this fit (single chain).", "mi_ctx": {"sv": "standard", "factor": false, "ydesc": "y<sub>t</sub> = simulated growth", "ek_scale": "", "gauss_note": "Priors were rescaled for monthly data: the transition priors keep their prior mean durations (q = 0.967, p = 0.933), σ²<sub>ε</sub> and σ²<sub>η</sub> are divided by 3, B ~ IG(5, 1.5) and the initial regime means are (0.3, −1) to suit the factor’s scale; the recession-share rule is 3–50% instead of 20–80%. (Simulated series are on a monthly-like scale.)", "s2d": "1.33×10⁻⁴ s² (4×10⁻⁴ s² per quarter, ÷ 3)", "trans": "P<sub>00</sub> ~ Beta(29, 1), P<sub>11</sub> ~ Beta(28, 2)", "pscale": true, "s2d_ek": "1.33×10⁻⁴ s² (4×10⁻⁴ s² per quarter, ÷ 3)", "eta_b": "0.0033"}};
+  const MI_CTX = CFG.mi_ctx, NBW = CFG.nber_word || "NBER recession";
+  const D = window.GDP, $ = id => document.getElementById(id);
+  if (window.GDP_PROB100) Object.values(D).forEach(s => Object.keys(s).filter(k => k.startsWith("models")).forEach(k => Object.values(s[k] || {}).forEach(m => { const dec = a => a.map(x => x / 100);   // per-date arrays are stored as integers x100
+    ["prob", "sd", "delta"].forEach(f => { if (m[f]) m[f] = dec(m[f]); }); if (m.rt) m.rt = m.rt.map(x => x == null ? null : x / 100); if (m.path) ["m0", "m1"].forEach(f => { if (m.path[f]) m.path[f] = dec(m.path[f]); }); })));
+  const SAMPLES = CFG.samples;
+  const SM = ["MSM", "MSM-t", "MSM-SV", "MSM-t-SV"], RWEC = ["MSM-RW-EC", "MSM-RW-EC-t", "MSM-RW-EC-SV", "MSM-RW-EC-t-SV"], EK = ["Eo-Kim", "Eo-Kim const var", "Eo-Kim code", "Eo-Kim exact"];
+  const names = Array.from(new Set(Object.values(D).flatMap(x => Object.keys(x.models))));   // union over samples: some models exist for one sample only
+  const MSQ = names.filter(n => n.startsWith("MSQ")).sort(), HCOL = ["#e8833a", "#7a4fb5"];
+  const AX = CFG.axes || null;   // optional: several toolbar selectors whose values are joined with "_" to form the sample key
+  const st = { sample: CFG.default_sample, ax: AX ? AX.map(a => a.default) : null, picked: ["MSQ(0.30)"], tau: "MSQ(0.30)", metric: "F1", full: false, restr: false, drift: false, tab: "conv" };   // picked: 1 or 2 models, first = primary (orange), second = comparison (purple)
+  const avail = m => !!(D[st.sample].models || {})[m], TAUS = () => MSQ.filter(avail);
+  const PRETTY = { "Eo-Kim": "Eo–Kim (paper's sampler)", "Eo-Kim const var": "Eo–Kim, constant variance", "Eo-Kim code": "Eo–Kim, authors' code (ported)", "Eo-Kim exact": "Eo–Kim exact (no sign restr.)" };
+  const pretty = m => PRETTY[m] || m;
+  const tileLabel = m => ({ "MSM-t-SV": "t-SV", "MSM-RW-EC": "RW-EC", "MSM-RW-EC-t": "RW-EC-t", "MSM-RW-EC-SV": "RW-EC-SV", "MSM-RW-EC-t-SV": "RW-EC-t-SV", "Eo-Kim": "E–K", "Eo-Kim const var": "E–Kc", "Eo-Kim code": "E–Kg", "Eo-Kim exact": "E–Kx" })[m] || (m.startsWith("MSQ") ? "MSQ " + m.slice(4, 9).replace("0.", ".").replace(")", "") : m);
+  const KIND = { "MSM": "msm", "MSM-t": "msmt", "MSM-SV": "msmsv", "MSM-t-SV": "msmtsv", "MSM-RW-EC": "rwec", "MSM-RW-EC-t": "rwect", "MSM-RW-EC-SV": "rwecsv", "MSM-RW-EC-t-SV": "rwectsv", "Eo-Kim": "ek", "Eo-Kim const var": "ekc", "Eo-Kim code": "ekg", "Eo-Kim exact": "ekx" };
+  Object.assign(KIND, CFG.kinds || {});
+  const pct = v => Math.round(v * 100) + "%", fmt = v => v.toFixed(CFG.dec) + CFG.unit, $c = v => v > 1.05 ? "r" : v > 1.01 ? "a" : "g";
+  const addD = g => !!(g.delta && !g.path);   // the switching-mean drift models add δ(t) to the regime means; Eo–Kim's path means (m0, m1) already include δ(t)
+  const R = () => D[st.sample], sget = (k, dflt) => R()[k] != null ? R()[k] : (dflt !== undefined ? dflt : CFG[k]), clipR = () => sget("clip"), ctxR = () => Object.assign({}, MI_CTX, R().mi_ctx || {});
+  const LST = k => (R() && R()[k]) || {};
+  const isRW = m => m.indexOf("MSM-RW-EC") === 0;                      // the random-walk-regimes / error-correction family has all four toggle combinations
+  const hasD = m => !!LST("models_drift")[m];
+  const isDrift = m => st.drift && hasD(m);
+  const hasR = m => isRW(m) ? !!(isDrift(m) ? LST("models_drift_a1neg")[m] : LST("models_a1neg")[m]) : (!isDrift(m) && !!LST("models_a1neg")[m]);   // the zero-mean split of the MSM-family drift models has alpha1 < 0 built in: no separate restricted drift fit
+  const isRestricted = m => st.restr && hasR(m);
+  const get = m => isRW(m) ? (isDrift(m) ? (isRestricted(m) ? LST("models_drift_a1neg")[m] : LST("models_drift")[m]) : (isRestricted(m) ? LST("models_a1neg")[m] : R().models[m]))
+                           : (isRestricted(m) ? LST("models_a1neg")[m] : (isDrift(m) ? LST("models_drift")[m] : R().models[m]));
+  const dates = () => { const r = R(); if (r.date) return r.date.map(s => new Date(s + "T00:00:00Z"));
+    const [y0, m0] = r.start.split("-").map(Number), n = r.growth.length + (r.gap ? r.gap[1] : 0), all = Array.from({ length: n }, (_, i) => { const t = m0 - 1 + i; return new Date(Date.UTC(y0 + Math.floor(t / 12), t % 12, 1)); });
+    if (!r.gap) return all; const g0 = new Date(r.gap[0] + "T00:00:00Z").getTime(), g1 = new Date(Date.UTC(new Date(g0).getUTCFullYear(), new Date(g0).getUTCMonth() + r.gap[1], 1)).getTime(); return all.filter(x => x.getTime() < g0 || x.getTime() >= g1); };   // monthly series given by start month (and an optional gap of dropped months)
+  // Convergence flag = how much the chains disagree about the quantity read off the page, the Pr(low regime) path: the largest (over months) range of the chain-mean Pr(low) across chains, and the Monte Carlo error of the pooled Pr(low)
+  // (between-chain sd / sqrt(K)).  green: range <= 15 points and s.e. <= 3 points;  amber: above either;  red: range > 30 points or s.e. > 6 points.  Parameter R-hat and ESS are diagnostics (tables, chips) and do not set the colour.
+  const FLAG = { rng: [0.15, 0.30], se: [0.03, 0.06] };
+  const flagOf = d => { if (!d) return "n"; const rg = d.dpr == null ? 0 : d.dpr, se = d.mcse_max == null ? 0 : d.mcse_max; return rg > FLAG.rng[1] || se > FLAG.se[1] ? "r" : rg > FLAG.rng[0] || se > FLAG.se[0] ? "a" : "g"; };
+  const conv = m => flagOf(get(m).diag);
+  const convTxt = { g: "chains agree on the regime probabilities", a: "chains differ somewhat on the regime probabilities", r: "chains disagree on the regime probabilities", n: "no diagnostics (single chain)" };
+  const dtip = d => d ? "Pr(low) differs by up to " + Math.round(100 * d.dpr) + " points between chains" + (d.mcse_max != null ? " (Monte Carlo s.e. up to " + (100 * d.mcse_max).toFixed(1) + " points)" : "") + "; max R̂ " + d.rhat.toFixed(2) + " – " : "";
+  const anyDiag = () => Object.values(D).some(s => Object.values(s.models).some(m => m.diag));
+  const msqPicked = () => st.picked.filter(m => m.startsWith("MSQ"));
+
+  function spells(v, f) { const out = []; let s = null;
+    v.forEach((x, i) => { const on = f(x); if (on && s === null) s = i; if ((!on || i === v.length - 1) && s !== null) { out.push([s, on && i === v.length - 1 ? i : i - 1]); s = null; } });
+    return out; }
+
+  /* ---------- toolbar ---------- */
+  if (AX) { $("seg-sample").parentElement.remove(); AX.forEach((a, i) => { const wrap = document.createElement("span"), lab = document.createElement("span"), seg = document.createElement("span"); lab.className = "tl"; lab.textContent = a.label; seg.className = "seg"; seg.dataset.ax = i;
+      Object.keys(a.options).forEach(k => { const b = document.createElement("button"); b.dataset.k = k; b.textContent = a.options[k].short; b.title = a.options[k].long || ""; b.onclick = () => { const prev = st.ax.slice(); st.ax[i] = k; let key = st.ax.join("_");
+        if (!D[key]) { const dflt = AX.map((x, j) => j === i ? k : x.default).join("_");                       // that combination does not exist: keep the clicked value, reset the others to their defaults, else any combination containing it
+          const any = Object.keys(D).find(q => q.split("_")[i] === k);
+          if (D[dflt]) { key = dflt; st.ax = dflt.split("_"); } else if (any) { key = any; st.ax = any.split("_"); } else { st.ax = prev; return; } }
+        st.sample = key; fixPicked(); render(); };
+      if (!Object.keys(D).some(q => q.split("_")[i] === k)) { b.disabled = true; b.style.opacity = ".45"; b.title += " (not fitted yet)"; }       // an option no sample provides yet
+      seg.appendChild(b); });
+      wrap.append(lab, seg); document.querySelector(".toolbar").insertBefore(wrap, $("seg-metric").parentElement); }); st.sample = st.ax.join("_");
+  } else Object.keys(SAMPLES).filter(k => D[k]).forEach(k => { const b = document.createElement("button"); b.dataset.k = k; b.textContent = SAMPLES[k].short; b.title = SAMPLES[k].long; b.onclick = () => { st.sample = k; fixPicked(); render(); }; $("seg-sample").appendChild(b); });
+  if (CFG.replication && !AX) { const sp = $("seg-sample").parentElement; if (sp) sp.style.display = "none"; }       // a replication page has a single sample: no selector
+  document.querySelectorAll("#seg-metric button").forEach(b => b.onclick = () => { st.metric = b.dataset.m; render(); });
+  $("chip-full").onclick = () => { st.full = !st.full; render(); };
+  $("chip-restr").onclick = () => { st.restr = !st.restr; render(); };
+  $("chip-drift").onclick = () => { st.drift = !st.drift; render(); };
+  document.querySelectorAll("#ptabs button").forEach(b => b.onclick = () => { st.tab = b.dataset.t; render(); });
+  function fixPicked() { st.picked = st.picked.filter(avail); if (!st.picked.length) st.picked = [avail("MSQ(0.30)") ? "MSQ(0.30)" : TAUS()[0] || SM[0]]; if (!avail(st.tau)) st.tau = TAUS()[0]; }
+  function chips() {
+    const anyR = Object.values(D).some(s => s.models_a1neg), anyD = Object.values(D).some(s => s.models_drift);
+    $("chip-restr").style.display = CFG.replication ? "none" : ""; $("chip-drift").style.display = CFG.replication ? "none" : ""; $("chip-restr").parentElement.style.display = CFG.replication ? "none" : "";      // always shown; greyed (with an explanation) when the selected sample has no such fits yet
+    const affR = st.picked.some(m => hasR(m)), affD = st.picked.some(hasD);
+    const set = (id, on, aff, tip, tipNa) => { const c = $(id); c.classList.toggle("on", on); c.classList.toggle("na", !aff); c.title = aff ? tip : tipNa; };
+    set("chip-restr", st.restr, affR, "Reruns the univariate regime models with the low-regime mean constrained below zero (an exact truncated draw); for the random-walk-regime / error-correction (RW-EC) models it switches on the paper's sign restrictions μ*₀ > 0 > μ*₁ at every date.", (R().models_a1neg ? "No effect on the selected model(s): Eo–Kim has its own sign restrictions (or none), MSQ is unchanged, and the drift fits already have α₁ < 0 built in." : "Restricted fits (low-regime mean < 0) have not been run for this sample yet."));
+    set("chip-drift", st.drift, affD, "Adds a random-walk long-run mean δ(t) (fixed variance; regime means as zero-mean deviations) to the four switching-mean models and, where fitted, to MSQ; for the RW-EC models it turns the long-run mean from a constant into a random walk (the regime quantiles then sit around a slowly moving long-run level). Eo–Kim is unchanged (it already has δ).", (R().models_drift ? "No effect on the selected model(s): only MSM, MSM-t, MSM-SV, MSM-t-SV and (where fitted) MSQ have a drift variant." : "Slow-drift fits have not been run for this sample yet."));
+    set("chip-full", st.full, true, "Show the whole range of the series instead of clipping the top panel to " + clipR()[0] + " … " + clipR()[1] + " (" + sget("clip_why") + ").", "");
+    if (AX) document.querySelectorAll(".seg[data-ax]").forEach(sg => sg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.k === st.ax[+sg.dataset.ax])));
+    else document.querySelectorAll("#seg-sample button").forEach(b => b.classList.toggle("on", b.dataset.k === st.sample));
+    document.querySelectorAll("#seg-metric button").forEach(b => b.classList.toggle("on", b.dataset.m === st.metric));
+  }
+
+  /* ---------- model list ---------- */
+  const SL = document.createElement("div");
+  SL.innerHTML = '<div class="dual"><div class="trk"></div><input type="range" min="0" max="12" step="1" aria-label="quantile tau"><input type="range" min="0" max="12" step="1" aria-label="second quantile tau"></div><div class="lab"><span id="tl0"></span><span id="tl"></span><span id="tl1"></span></div>';
+  const R1 = SL.querySelectorAll("input")[0], R2 = SL.querySelectorAll("input")[1];
+  function onSlide(k) { const Rg = k ? R2 : R1, mp = msqPicked(), T = TAUS(), cur = mp.length ? mp[k] : st.tau, other = mp.length === 2 ? T.indexOf(mp[1 - k]) : -1, v = +Rg.value;
+    if (v === other) { Rg.value = T.indexOf(cur); return; }               // two handles may not sit on the same tau
+    const m = T[v]; if (mp.length) st.picked[st.picked.indexOf(cur)] = m; st.tau = m; render(true); }
+  R1.oninput = () => onSlide(0); R2.oninput = () => onSlide(1);
+  function addTau() { const T = TAUS(), mp = msqPicked(), base = mp.length ? mp[0] : st.tau, i = T.indexOf(base), j = i + 2 < T.length ? i + 2 : i - 2;
+    st.picked = [base, T[Math.max(0, j)]]; st.tau = base; render(); }               // two tau values; replaces a non-MSQ second pick if there was one
+  function mountSlider() { const slot = $("slot"); if (!slot) return; const T = TAUS(), vs = T.map(m => get(m).metrics[st.metric]), lo = Math.min(...vs), hi = Math.max(...vs), n = vs.length, mp = msqPicked(), hs = mp.length ? mp : [st.tau];
+    R1.max = R2.max = n - 1; SL.querySelector("#tl0").textContent = "τ = " + T[0].slice(4, -1); SL.querySelector("#tl1").textContent = T[n - 1].slice(4, -1);
+    SL.querySelector(".trk").style.background = "linear-gradient(to right," + vs.map((v, i) => "rgba(70,110,180," + (0.12 + 0.88 * (v - lo) / Math.max(1e-9, hi - lo)).toFixed(2) + ") " + (100 * i / n).toFixed(1) + "% " + (100 * (i + 1) / n).toFixed(1) + "%").join(",") + ")";
+    [R1, R2].forEach((Rg, k) => { Rg.style.display = k < hs.length ? "" : "none"; if (k < hs.length) { Rg.value = T.indexOf(hs[k]); Rg.style.setProperty("--c", HCOL[Math.max(0, st.picked.indexOf(hs[k]))]); } });
+    const bad = hs.filter(m => conv(m) === "r").length;
+    SL.querySelector("#tl").innerHTML = hs.map(m => '<b style="color:' + (hs.length > 1 ? HCOL[st.picked.indexOf(m)] : "inherit") + '">τ = ' + m.slice(4, -1) + "</b>").join(" and ") + " · darker = higher " + metricName() + (bad ? " · <span style='color:var(--bad)'>not converged</span>" : "") +
+      (mp.length === 1 ? ' · <button class="addtau" id="addtau" title="Adds a second tau handle so two MSQ models can be compared">+ compare another τ' + (st.picked.length === 2 ? " (replaces " + tileLabel(st.picked.find(m => !m.startsWith("MSQ"))) + ")" : "") + "</button>"
+        : mp.length === 0 ? ' · <button class="addtau" id="addtau" title="Selects two MSQ models to compare">compare two τ</button>' : "");
+    const bt = SL.querySelector("#addtau"); if (bt) bt.onclick = addTau; if (SL.parentNode !== slot) slot.appendChild(SL); }
+  const metricName = () => ({ F1: "F1", AUC: "AUC", TPR: "TPR", Precision: "precision", FPR: "FPR" })[st.metric];
+  const goodness = v => st.metric === "FPR" ? 1 - Math.min(1, v * 2) : v;
+  function rowHTML(m) { const g = get(m), v = g.metrics[st.metric], sfx = (isRestricted(m) ? " <small>α₁&lt;0</small>" : "") + (isDrift(m) ? " <small>+drift</small>" : "");
+    return '<div class="row" data-m="' + m + '"><input type="checkbox" data-c="1"><span class="nm">' + pretty(m) + sfx + '</span><span><span class="bar"><i style="width:' + Math.max(2, goodness(v) * 100) + '%"></i></span><div class="v">' + metricName() + " " + (st.metric === "AUC" ? v.toFixed(2) : pct(v)) +
+      '</div></span><span class="dot ' + conv(m) + '" title="' + dtip(g.diag) + convTxt[conv(m)] + '"></span></div>'; }
+  function list() { let h = "";
+    if (CFG.rows) CFG.rows.forEach(g => { const ms = g.models.filter(avail); if (ms.length) h += '<div class="grp">' + g.group + '</div>' + ms.map(rowHTML).join(""); });
+    else h += '<div class="grp">Switching mean</div>' + SM.filter(avail).map(rowHTML).join("");
+    if (TAUS().length) h += '<div class="grp">Switching quantile (τ)</div>' + (msqPicked().length ? msqPicked() : [st.tau]).map(m => rowHTML(m).replace('class="row"', 'class="row msqrow"')).join("") + '<div class="slw" id="slot"></div>';
+    if (!CFG.rows && RWEC.some(avail)) h += '<div class="grp">Random-walk regimes + error correction</div>' + RWEC.filter(avail).map(rowHTML).join("");
+    if (!CFG.rows && EK.some(avail)) h += '<div class="grp">Eo–Kim</div>' + EK.filter(avail).map(rowHTML).join("");
+    $("list").innerHTML = h; mountSlider();
+    $("list").querySelectorAll(".row").forEach(r => r.onclick = e => { const m = r.dataset.m;
+      if (e.target.dataset.c) { if (e.target.disabled) return; const i = st.picked.indexOf(m); if (i >= 0) st.picked.splice(i, 1); else st.picked.push(m); }
+      else st.picked = [m];                                   // clicking a row views just that model
+      if (m.startsWith("MSQ")) st.tau = m; render(); }); syncRows(); }
+  function syncRows() { const n = st.picked.length;
+    document.querySelectorAll("#list .row").forEach(r => { const m = r.dataset.m, i = st.picked.indexOf(m), cb = r.querySelector("input"); cb.checked = i >= 0;
+      cb.disabled = (i >= 0 && n === 1) || (i < 0 && n === 2); cb.title = i >= 0 ? (n === 1 ? "At least one model must stay selected" : "Untick to stop comparing") : (n === 2 ? "Two models selected (the maximum): untick one first" : "Tick to compare with the selected model");
+      r.classList.toggle("sel", i === 0); r.classList.toggle("sel2", i === 1); r.style.opacity = (i < 0 && n === 2) ? .72 : 1; });
+    $("hint").textContent = n === 1 ? "1 selected · tick one more to compare (max 2)" : "Comparing 2 (max) · untick one to change"; }
+
+  /* ---------- chart ---------- */
+  const ink = () => getComputedStyle(document.body).color, GRID = "rgba(128,128,128,.15)";
+  function renderChart() {
+    const r = R(), dt = dates(), models = st.picked, cols = {}; models.forEach((m, i) => cols[m] = HCOL[i]);
+    const traces = [{ x: dt, y: r.growth, name: sget("series_name"), type: "scatter", mode: "lines", line: { color: "#5b8db8", width: 1 }, xaxis: "x", yaxis: "y", hovertemplate: "%{y:." + CFG.dec + "f}" + CFG.unit + "<extra>" + sget("series_short") + "</extra>" }];
+    models.forEach(m => { const g = get(m), p0 = g.path ? g.path.m0 : null, p1 = g.path ? g.path.m1 : null;
+      traces.push({ x: dt, y: g.prob.map((p, i) => p * (p1 ? p1[i] : g.alpha[1]) + (1 - p) * (p0 ? p0[i] : g.alpha[0]) + (addD(g) ? g.delta[i] : 0)),
+        name: pretty(m) + (addD(g) ? " + drift" : "") + " expected", type: "scatter", mode: "lines", line: { color: cols[m], width: 2 }, xaxis: "x", yaxis: "y", legendgroup: m, hovertemplate: "%{y:." + CFG.dec + "f}" + CFG.unit + "<extra>" + tileLabel(m) + " expected</extra>" }); });
+    models.forEach(m => { const g = get(m); if (g.delta) traces.push({ x: dt, y: g.delta, name: tileLabel(m) + (g.path ? " long-run mean δ(t)" : " slow drift δ(t)"), type: "scatter", mode: "lines", line: { color: cols[m], width: 1.5, dash: "dot" }, xaxis: "x", yaxis: "y", legendgroup: m, hovertemplate: "%{y:.2f}<extra>" + tileLabel(m) + " drift δ</extra>" }); });
+    models.forEach(m => { const g = get(m); if (g.rt) { const ix = g.rt.map((v, i) => v == null ? -1 : i).filter(i => i >= 0); traces.push({ x: ix.map(i => dt[i]), y: ix.map(i => g.rt[i]), name: tileLabel(m) + " real-time", type: "scatter", mode: "lines+markers", line: { color: cols[m], width: 1.2, dash: "dot" }, marker: { size: 5, symbol: "diamond", color: cols[m] },
+      xaxis: "x", yaxis: "y2", legendgroup: m, hovertemplate: "%{y:.0%}<extra>" + tileLabel(m) + " real-time (data to that month only)</extra>" }); } });
+    if (R().published) traces.push({ x: dt, y: R().published.prob, name: R().published.name, type: "scatter", mode: "lines", line: { color: "#222", width: 1.3, dash: "dot" }, xaxis: "x", yaxis: "y2", hovertemplate: "%{y:.0%}<extra>" + R().published.name + "</extra>" });
+    models.forEach(m => traces.push({ x: dt, y: get(m).prob, name: pretty(m), type: "scatter", mode: "lines", line: { color: cols[m], width: 1.8 }, xaxis: "x", yaxis: "y2", legendgroup: m, showlegend: false, hovertemplate: "%{y:.0%}<extra>" + tileLabel(m) + " Pr(low regime)</extra>" }));
+    const volM = models.filter(m => get(m).sd), hasVol = volM.length > 0;
+    volM.forEach(m => traces.push({ x: dt, y: get(m).sd, name: tileLabel(m) + " σ_t", type: "scatter", mode: "lines", line: { color: cols[m], width: 1.8 }, xaxis: "x", yaxis: "y3", legendgroup: m, showlegend: false, hovertemplate: "%{y:.2f}<extra>" + tileLabel(m) + " σ_t</extra>" }));
+    const shapes = spells(r.nber, v => v === 1).map(([a, b]) => ({ type: "rect", xref: "x", yref: "paper", x0: dt[a], x1: dt[Math.min(b + 1, dt.length - 1)], y0: 0, y1: 1, fillcolor: "rgba(120,130,150,.25)", line: { width: 0 }, layer: "below" }));
+    shapes.push({ type: "line", xref: "paper", x0: 0, x1: 1, yref: "y2", y0: .5, y1: .5, line: { color: "#888", dash: "dot", width: 1 } });
+    const ann = [];
+    if (r.ext_from) { const x0 = new Date(r.ext_from + "T00:00:00Z"); shapes.push({ type: "rect", xref: "x", yref: "paper", x0, x1: dt[dt.length - 1], y0: 0, y1: 1, fillcolor: "rgba(232,131,58,.08)", line: { color: "rgba(232,131,58,.6)", width: 1, dash: "dash" }, layer: "below" });
+      ann.push({ xref: "x", yref: "paper", x: x0, y: 1.0, xanchor: "left", yanchor: "top", showarrow: false, text: "simulated future →", font: { size: 11, color: "#c06a22" } }); }
+    const layout = { margin: { l: 60, r: 14, t: 34, b: 36 }, showlegend: true, legend: { orientation: "h", y: 1.07, x: 0, font: { size: 11 } }, font: { size: 12, color: ink() }, hovermode: "x unified", shapes, annotations: ann, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      xaxis: { anchor: hasVol ? "y3" : "y2", showgrid: false, range: [dt[0], dt[dt.length - 1]] },
+      yaxis: { domain: hasVol ? [0.52, 1] : [0.40, 1], title: sget("ytitle"), zeroline: true, zerolinecolor: "#888", gridcolor: GRID, range: st.full ? null : clipR(), autorange: st.full },
+      yaxis2: { domain: hasVol ? [0.25, 0.43] : [0, 0.32], title: "Pr(low regime)", range: [0, 1.02], tickformat: ".0%", gridcolor: GRID } };
+    if (hasVol) layout.yaxis3 = { domain: [0, 0.16], title: "σ_t", type: "log", gridcolor: GRID, tickvals: CFG.sd_ticks || undefined, ticktext: CFG.sd_ticks ? CFG.sd_ticks.map(String) : undefined };
+    $("chart").style.height = (hasVol ? 740 : 620) + "px";
+    Plotly.react("chart", traces, layout, { displayModeBar: false, responsive: true });
+  }
+
+  /* ---------- header, stats, notes ---------- */
+  function nberMeans() { const r = R(), a = [], b = []; r.growth.forEach((g, i) => (r.nber[i] ? a : b).push(g)); const mean = x => x.reduce((s, v) => s + v, 0) / x.length; return [mean(b), mean(a)]; }
+  function renderHead() { const ms = st.picked, cs = ms.map(conv), worst = cs.includes("r") ? "r" : cs.includes("a") ? "a" : cs.includes("g") ? "g" : "n";
+    $("title").textContent = ms.map(pretty).join("  vs  "); $("lg-nber").textContent = NBW; $("lg-series").textContent = sget("series_name");
+    $("status").innerHTML = ms.length === 1 ? '<span class="dot ' + worst + '"></span>' + convTxt[worst] : ms.map((m, i) => '<span class="dot ' + cs[i] + '"></span>' + tileLabel(m) + ": " + convTxt[cs[i]]).join(" &nbsp; "); }
+  function renderStats() { const A = st.picked[0], B = st.picked[1], q = get(A), qb = B ? get(B) : null, [expM, recM] = nberMeans();
+    const avg = A.startsWith("Eo") ? " (avg.)" : (q.delta ? " (vs. drift δ)" : "");
+    const dl = (x, y, f) => { const d = x - y; return (d >= 0 ? "+" : "−") + f(Math.abs(d)); };
+    const rows = [["F1 score", q.metrics.F1.toFixed(2), "AUC " + q.metrics.AUC.toFixed(2) + " · FPR " + pct(q.metrics.FPR), qb && tileLabel(B) + " " + qb.metrics.F1.toFixed(2) + " (" + dl(q.metrics.F1, qb.metrics.F1, v => v.toFixed(2)) + ")"],
+      ["True positive rate", pct(q.metrics.TPR), "precision " + pct(q.metrics.Precision), qb && tileLabel(B) + " " + pct(qb.metrics.TPR) + " (" + dl(q.metrics.TPR, qb.metrics.TPR, v => Math.round(v * 100) + " pts") + ")"],
+      ["Low-regime mean" + avg, fmt(q.alpha[1]), NBW + "s: <b>" + fmt(recM) + "</b>" + (R().truth ? " &nbsp;(" + sget("truth_word") + ": " + R().truth[1].toFixed(2) + ")" : ""), qb && tileLabel(B) + " " + fmt(qb.alpha[1])],
+      ["High-regime mean" + avg, fmt(q.alpha[0]), NBW.replace("recession", "expansion") + "s: <b>" + fmt(expM) + "</b>" + (R().truth ? " &nbsp;(" + sget("truth_word") + ": " + R().truth[0].toFixed(2) + ")" : ""), qb && tileLabel(B) + " " + fmt(qb.alpha[0])]];
+    $("stats").innerHTML = rows.map(c => '<div class="stat"><div class="k">' + c[0] + (B ? " · " + tileLabel(A) : "") + '</div><div class="v">' + c[1] + '</div><div class="d">' + (c[3] || c[2]) + "</div></div>").join(""); }
+  function renderNote() {
+    const A = st.picked[0], q = get(A), cl = clipR(), clip = !st.full && R().growth.some(g => g < cl[0] || g > cl[1]) ? " Values outside " + cl[0] + " to " + cl[1] + CFG.unit + " (" + sget("clip_why") + ") are clipped; switch on “Full range” to see them." : "";
+    const extra = q.theta ? " Error-correction coefficients θ: " + q.theta.map(x => x.toFixed(2)).join(", ") + "." : "";
+    $("note").innerHTML = (R().label ? "<b>" + R().label + ".</b> " : "") + (R().note ? R().note + " " : "") + "Gray bands: " + NBW + "s. The middle panel shows each model's probability of the low regime against the dotted 50% line." + (st.picked.some(m => get(m).rt) ? " Diamonds: pseudo-real-time probabilities (the whole procedure refitted on the data up to that month only, latest-vintage data, one chain)." : "") + extra + clip;
+    const w = [];
+    st.picked.forEach(m => { const g = get(m), lab = st.picked.length > 1 ? "<b>" + tileLabel(m) + ":</b> " : "";
+      if (flagOf(g.diag) === "r") w.push(lab + "<b>The chains disagree about the regime probabilities</b> for this fit: in some month their Pr(low regime) differs by up to " + Math.round(100 * g.diag.dpr) + " points" + (g.diag.mcse_max != null ? " (Monte Carlo s.e. of the pooled probability up to " + (100 * g.diag.mcse_max).toFixed(0) + " points)" : "") + "; max R̂ " + g.diag.rhat.toFixed(2) + ", min ESS " + Math.min(g.diag.ess_bulk, g.diag.ess_tail) + ". The pooled probabilities and metrics shown are unreliable. See the Convergence tab.");
+      if (g.swap_share != null && isRW(m) && g.swap_share > 0.05) w.push(lab + "Without the sign restrictions the regime labels are not identified: <b>" + (100 * g.swap_share).toFixed(0) + "% of retained draws</b> were in the swapped labelling and were relabelled (booms = the higher-mean regime). Turn on the restriction switch for the paper's identified version.");
+      if (g.swap_share != null && !isRW(m) && g.swap_share > 0.05) w.push(lab + "<b>" + (100 * g.swap_share).toFixed(0) + "% of retained draws</b> were in the swapped labelling and were relabelled.");
+      if (g.swap_share != null && !isRW(m) && g.alpha[1] > 0.5) w.push(lab + "This exact sampler's low regime averages <b>+" + fmt(g.alpha[1]) + "</b>, so it separates slower-growth from faster-growth eras rather than finding recessions.");
+      if (CFG.capture != null && m === "MSM" && g.alpha[1] < CFG.capture) w.push(lab + "MSM's low regime is " + fmt(g.alpha[1]) + ": it has been captured by the 2020 pandemic " + CFG.period + "s, the failure Piger (2026) describes.");
+      if (g.swap_share == null && g.alpha[1] > 0.5) w.push(lab + "This model's low regime averages <b>+" + fmt(g.alpha[1]) + "</b>, so it separates slower-growth from faster-growth periods rather than isolating recessions. Check the middle panel: it can be high in expansions too.");
+      if (st.restr && !hasR(m) && m.startsWith("Eo")) w.push(lab + "No restricted variant is shown for Eo–Kim: it already has its own restriction (hard sign restrictions in the paper's sampler, the exact time-average restriction in the exact sampler), so this model is the same with the switch on or off.");
+      if (isDrift(m)) w.push(lab + "<b>Slow drift on:</b> y = δ(t) + μ(S) + error, where δ(t) is a random-walk <i>unconditional</i> long-run mean with fixed innovation variance " + MI_CTX.s2d + " (dotted line in the top panel) and the regime offsets are deviations from it that average to zero (π₀α₀ + π₁α₁ = 0, so α₁ &lt; 0 is built in and α₀ is implied). The expected line adds δ(t) back.");
+      if (isRestricted(m)) w.push(lab + "<b>Restricted fit:</b> the low-regime mean is constrained below zero. This removes the slower-growth/faster-growth modes, but the model then labels fewer " + CFG.period + "s “low,” so its recession probabilities are lower and more conservative; it ranks " + CFG.period + "s well."); });
+    $("warn").innerHTML = w.map(t => '<div class="warn">' + t + "</div>").join(""); }
+
+  /* ---------- tabs ---------- */
+  const rcls = v => v > 1.05 ? "rr" : v > 1.01 ? "ra" : "rg";
+  function convHTML(m) { const q = get(m), d = q.diag; if (!d) return "<p class='note' style='margin:0'>" + (CFG.no_diag || "No convergence diagnostics for this fit.") + "</p>";
+    const chip = (k, v, c) => '<span class="cchip ' + c + '"><b>' + v + "</b> " + k + "</span>";
+    const rgc = d.dpr > FLAG.rng[1] ? "r" : d.dpr > FLAG.rng[0] ? "a" : "g", sec = d.mcse_max == null ? "g" : d.mcse_max > FLAG.se[1] ? "r" : d.mcse_max > FLAG.se[0] ? "a" : "g";
+    let h = '<div class="chips">' + chip("max gap in Pr(low) between chains (points)", Math.round(100 * d.dpr), rgc) + (d.mcse_max == null ? "" : chip("max Monte Carlo s.e. of Pr(low) (points)", (100 * d.mcse_max).toFixed(1), sec)) +
+      chip("max R̂ (rank-norm. split)", d.rhat.toFixed(2), "n") + chip("multivariate PSRF", d.psrf == null ? "n/a" : d.psrf.toFixed(2), "n") + chip("min bulk ESS", d.ess_bulk, "n") + chip("min tail ESS", d.ess_tail, "n") + "</div>";
+    h += '<p class="note" style="margin:0 0 8px">' + (CFG.conv_note ? CFG.conv_note + " " : "") + d.K + " chains × " + d.draws + " retained draws each (split in halves for R̂). The colour reflects how much the chains disagree about the Pr(low regime) path that the page shows: green = no month differs by more than 15 points between chains and the Monte Carlo s.e. of the pooled probability is at most 3 points; amber = above either; red = a month differs by more than 30 points or the s.e. exceeds 6 points. Parameter R̂ and ESS are diagnostics: they are shown (gray chips, table) but do not set the colour, since a parameter such as the low-regime mean can have R̂ of 1.02 while the probabilities agree closely.</p>";
+    h += '<div class="cols2"><div class="tblw"><table class="small"><thead><tr><th>Chain</th><th>Mean Pr(low)</th><th>AUC</th><th>F1</th>' + (d.chain_a1 ? "<th>Low mean</th>" : "") + "</tr></thead><tbody>" +
+      d.chain_pr.map((p, i) => "<tr><td>" + (i + 1) + "</td><td>" + p.toFixed(2) + "</td><td>" + d.chain_auc[i].toFixed(2) + "</td><td>" + d.chain_f1[i].toFixed(2) + "</td>" + (d.chain_a1 ? "<td>" + d.chain_a1[i].toFixed(2) + "</td>" : "") + "</tr>").join("") + "</tbody></table></div>";
+    h += '<div class="tblw"><table class="small"><thead><tr><th>Parameter</th><th>Mean</th><th>R̂</th><th>Bulk ESS</th><th>Tail ESS</th><th title="Geweke (1992) within-chain diagnostic: compares the mean of the first 10% and the last 50% of a chain (|z| above about 2-3 means the chain is still drifting). It is a convergence diagnostic only, NOT the Geweke (2004) Getting-it-Right joint-distribution test of whether a sampler targets the right distribution.">|Geweke z|</th></tr></thead><tbody>' +
+      d.params.map(p => "<tr><td>" + p.p + "</td><td>" + p.m.toFixed(2) + '</td><td class="' + rcls(p.rhat == null ? 1 : p.rhat) + '">' + (p.rhat == null ? "–" : p.rhat.toFixed(2)) + "</td><td>" + (p.essb == null ? "–" : p.essb) + "</td><td>" + (p.esst == null ? "–" : p.esst) + "</td><td>" + (p.gz == null ? "–" : p.gz.toFixed(1)) + "</td></tr>").join("") + "</tbody></table></div></div>";
+    if (d.diverged > 0) h += '<p class="note" style="margin:8px 0 0"><b>' + d.diverged + " further chain(s) diverged</b> (the variance scale B grew without bound) and were excluded from the pooled results above.</p>";
+    const o = q.diag_old; if (o) h += '<p class="note" style="margin:8px 0 0">For comparison, the standard Gibbs sampler (regime path drawn given the means) gave max R̂ <b class="' + rcls(o.rhat) + '">' + o.rhat.toFixed(2) + "</b>, PSRF " + (o.psrf == null ? "n/a" : o.psrf.toFixed(2)) + ", min bulk ESS " + o.ess_bulk + ", and a gap in Pr(low) between chains of " + o.dpr.toFixed(2) + ".</p>";
+    return h; }
+  function eachModel(f) { return st.picked.map(m => (st.picked.length > 1 ? '<div class="mname">' + pretty(m) + "</div>" : "") + f(m)).join(""); }
+  function tableHTML() { const EC = R().extra_cols || [], cols = ["AUC", "TPR", "FPR", "Precision", "F1"], all = (CFG.rows ? CFG.rows.flatMap(g => g.models).concat(TAUS()) : SM.concat(TAUS(), RWEC, EK)).filter(avail);
+    return '<div class="tblw"><table id="tbl"><thead><tr><th>Model</th>' + cols.map(c => "<th>" + (c === "Precision" ? "Prec." : c) + "</th>").join("") + "<th>Low regime</th><th>High regime</th><th title=\"Largest gap in Pr(low regime) between chains in any month (percentage points); the dot sets the page flag\">Chain gap, Pr(low)</th><th>R̂</th><th>Min ESS</th>" + EC.map(c => '<th title="' + c.tip + '">' + c.label + "</th>").join("") + "</tr></thead><tbody>" +
+      all.map(m => { const g = get(m), i = st.picked.indexOf(m); return '<tr data-m="' + m + '" class="' + (i === 0 ? "sel" : i === 1 ? "sel2" : "") + '"><td>' + pretty(m) + (isRestricted(m) ? " <small>(α₁&lt;0)</small>" : "") + (isDrift(m) ? " <small>(+drift)</small>" : "") + "</td>" +
+        cols.map(c => "<td>" + g.metrics[c].toFixed(2) + "</td>").join("") + "<td>" + g.alpha[1].toFixed(CFG.dec) + "</td><td>" + g.alpha[0].toFixed(CFG.dec) + "</td>" +
+        (g.diag ? '<td><span class="dot ' + flagOf(g.diag) + '"></span> ' + Math.round(100 * g.diag.dpr) + "</td><td>" + g.diag.rhat.toFixed(2) + "</td><td>" + Math.min(g.diag.ess_bulk, g.diag.ess_tail) + "</td>" : '<td><span class="dot n"></span></td><td></td><td></td>') + EC.map(c => "<td>" + (g.extra && g.extra[c.key] != null ? (c.pct ? Math.round(100 * g.extra[c.key]) + "%" : (c.int ? (g.extra[c.key] < 0 ? "never" : Math.round(g.extra[c.key])) : g.extra[c.key].toFixed(2))) : "–") + "</td>").join("") + "</tr>"; }).join("") + "</tbody></table></div>"; }
+  function girHTML() { const G = R().gir || []; if (!G.length) return "<p class='note'>No Getting-it-Right results for this sample.</p>";
+    let h = '<p class="note" style="margin:0 0 8px">Geweke (2004) joint-distribution test: a sampler that targets its own posterior gives the same joint distribution of parameters and states whether they are drawn directly from the prior or from a chain that alternates between simulating data and one sweep of the sampler. T = ' + G[0].T + ' observations; ' + G[0].M1.toLocaleString() + ' direct draws and ' + G[0].M2.toLocaleString() + ' successive-conditional sweeps; tests on means and cross-products of the parameters and state summaries. A sampler passes when the largest |Z| stays below the Bonferroni 0.1% cutoff. The P-P plots compare the two distributions of each test function (a correct sampler lies on the diagonal; red = |Z| above 3.3).</p>';
+    h += '<div class="tblw"><table class="small"><thead><tr><th>Sampler</th><th>Tests</th><th>|Z| &gt; 1.96 (expected)</th><th>|Z| &gt; 2.58 (exp.)</th><th>max |Z|</th><th>cutoff</th><th>verdict</th></tr></thead><tbody>' +
+      G.map(e => "<tr><td>" + e.label + "<br><small>" + (e.note || "") + "</small></td><td>" + e.nfun + "</td><td>" + e.fail05 + " (" + e.exp05 + ")</td><td>" + e.fail01 + " (" + e.exp01 + ")</td><td>" + e.maxZ.toFixed(1) + "</td><td>" + e.bonf.toFixed(2) + '</td><td><span class="dot ' + (e.verdict === "pass" ? "g" : "r") + '"></span> ' + (e.verdict === "pass" ? "passes" : "rejected") + "</td></tr>").join("") + "</tbody></table></div>";
+    h += '<div class="girgrid">' + G.map(e => "<figure><figcaption><b>" + e.label + "</b> &middot; max |Z| " + e.maxZ.toFixed(1) + (e.verdict === "pass" ? " (passes)" : " (rejected)") + '</figcaption><img src="' + e.img + '" alt="P-P plots: ' + e.label + '"></figure>').join("") + "</div>";
+    return h; }
+  function renderPane() { document.querySelectorAll("#ptabs button").forEach(b => b.classList.toggle("on", b.dataset.t === st.tab));
+    let h = "";
+    if (st.tab === "conv") h = eachModel(convHTML);
+    else if (st.tab === "model") h = eachModel(m => MI.html(KIND[m] || "msq", parseFloat(m.slice(4)), Object.assign({}, ctxR(), { restr: isRestricted(m), drift: isDrift(m) }, (CFG.ctx_over || {})[m] || {})));
+    else if (st.tab === "gir") h = girHTML();
+    else h = tableHTML();
+    $("pane").innerHTML = h;
+    $("pane").querySelectorAll("#tbl tbody tr").forEach(tr => tr.onclick = ev => { const m = tr.dataset.m; if (ev.shiftKey && st.picked.length === 1 && m !== st.picked[0]) st.picked.push(m); else st.picked = [m]; if (m.startsWith("MSQ")) st.tau = m; render(); }); }
+
+  function render(keep) { fixPicked(); chips(); $("tab-gir").style.display = (R().gir && R().gir.length) ? "" : "none"; if (st.tab === "gir" && !(R().gir && R().gir.length)) st.tab = "conv"; renderHead();
+    if (keep) { const rs = [...document.querySelectorAll("#list .msqrow")], hs = msqPicked().length ? msqPicked() : [st.tau]; rs.forEach((row, k) => { const t = document.createElement("div"); t.innerHTML = rowHTML(hs[k]); row.innerHTML = t.firstChild.innerHTML; row.dataset.m = hs[k]; }); syncRows(); mountSlider(); } else list();
+    renderChart(); renderStats(); renderNote(); renderPane(); }
+  fixPicked(); render();
+})();
+</script>
+</body>
+</html>
