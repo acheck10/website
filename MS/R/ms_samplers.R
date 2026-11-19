@@ -207,3 +207,4 @@ classify_metrics <- function(prob, nber) {
 # Prior on the stochastic-volatility innovation variance sigma2_eta ~ IG(nu_eta/2, h_eta/2). The paper's printed IG(4,1) (nu = 8, h = 2) is incompatible with its reported
 # posterior (and with the prior its own code uses, IG(5,.05)); the DEFAULT here is a nearly flat IG(1,.01) (nu = 2, h = .02). Set the environment variable SV_PRIOR=paper for IG(4,1).
 sv_eta_prior_default <- if (Sys.getenv("SV_PRIOR", "flat") == "paper") c(8, 2) else c(2, 0.02)
+if (nzchar(Sys.getenv("SV_IG"))) sv_eta_prior_default <- as.numeric(strsplit(Sys.getenv("SV_IG"), ",")[[1]])      # SV_IG="nu,h": override, s2eta ~ IG(nu/2, h/2) (experiments; unset = the default above)
