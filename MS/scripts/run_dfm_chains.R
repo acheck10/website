@@ -26,7 +26,7 @@ make_start <- function(fam, k, a1max = NULL) {          # chain 1: sampler defau
               msmtsv = list(S = S, a = a, s2eta = .05, h = lh, lam = rep(1, n), nu = 5, P = P), NULL)
 }
 sv1 <- tag == "old"
-drift <- tag %in% c("drift0", "driftq"); S2D <- as.numeric(Sys.getenv("S2D", "1.4e-4"))   # tag "drift0": MSM-family models with the slow drift delta_t (fixed random-walk variance S2D) and the zero-mean split (R/ms_models_drift0.R)
+drift <- tag %in% c("drift0", "driftq", "drift0r"); S2D <- as.numeric(Sys.getenv("S2D", "1.4e-4"))   # tag "drift0": MSM-family models with the slow drift delta_t (fixed random-walk variance S2D) and the zero-mean split (R/ms_models_drift0.R)
 if (drift) source("R/ms_models_drift0.R")
 eokim_prior_tight <- modifyList(eokim_prior, list(nu_eta = 10, h_eta = 0.1, nu_w = 20, h_w = 0.9))      # replication page, exact sampler: s2eta ~ IG(5, .05) (the authors' code) and s2w ~ IG(10, .45) (mean .05: regime means move little at a switch); see investigation/EK_EXACT_RESTRICTION.md
 eokim_prior_paper <- modifyList(eokim_prior, list(nu_eta = 8, h_eta = 2))      # the paper's printed prior on the volatility-innovation variance, IG(4, 1)
@@ -35,7 +35,7 @@ fit1 <- function(model, k) {                              # model = list(name, f
   rs <- model$restricted; PP <- priors_for(y, FREQ); pr <- modifyList(PP$pr, if (rs) list(a1_max = 0) else list()); prs <- modifyList(PP$prs, if (rs) list(a1_max = 0) else list()); ekp <- PP$ekp; EKA <- PP$ek_args      # priors in the series' own units and calendar time (R/priors.R)
   st <- make_start(model$fam, k, if (rs) 0 else NULL); sd <- 100 * k + 7
   t0 <- proc.time()[3]
-  m <- if (drift) drift0_gibbs(model$fam, y, ndraw, burn, prior = if (model$fam %in% c("msm", "msmt")) pr else prs, a1_prior = PP$drift$a1_prior, s2d = PP$drift$s2d, d0 = PP$drift$d0, dsd = PP$drift$dsd, tau = if (is.na(model$tau)) 0.3 else model$tau, seed = sd, verbose = FALSE, start = st) else switch(model$fam,
+  m <- if (drift) drift0_gibbs(model$fam, y, ndraw, burn, prior = if (model$fam %in% c("msm", "msmt")) pr else prs, a1_prior = PP$drift$a1_prior, s2d = PP$drift$s2d, d0 = PP$drift$d0, dsd = PP$drift$dsd, tau = if (is.na(model$tau)) 0.3 else model$tau, restrict_total = tag == "drift0r" || nzchar(Sys.getenv("DRIFT_TOTAL")), seed = sd, verbose = FALSE, start = st) else switch(model$fam,
     msm = msm_gibbs(y, ndraw, burn, prior = pr, seed = sd, verbose = FALSE, start = st),
     msmt = msmt_gibbs(y, ndraw, burn, prior = pr, seed = sd, verbose = FALSE, start = st),
     msq = msq_gibbs(y, tau = model$tau, ndraw, burn, prior = pr, seed = sd, verbose = FALSE, start = st),
