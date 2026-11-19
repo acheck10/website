@@ -11,18 +11,19 @@
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#141820; --card:#1c222d; --ink:#e8ecf2; --muted:#9aa5b6; --line:#2a3240; --band:rgba(160,170,190,.2); --link:#7db3e8; } }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 -apple-system,"Segoe UI",system-ui,sans-serif; }
-  header { background:var(--card); border-bottom:1px solid var(--line); padding:10px 16px 0; }
+  header { background:var(--card); padding:10px 16px 0; } .tabsbar { background:var(--card); border-bottom:1px solid var(--line); padding:0 16px; }
   .brand { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; } .brand h1 { font-size:18px; margin:0; font-weight:650; } .brand span { color:var(--muted); font-size:12px; }
   .tabs { display:flex; gap:4px; margin-top:8px; overflow-x:auto; } .tabs a { padding:8px 14px; border-radius:8px 8px 0 0; color:var(--muted); text-decoration:none; font-weight:600; white-space:nowrap; border:1px solid transparent; border-bottom:none; }
   .tabs a.cur { color:var(--ink); background:var(--bg); border-color:var(--line); }
-  .toolbar { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px; display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; }
+  .toolbar { position:sticky; top:var(--tabsh,0px); z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:8px 16px; display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; }
   .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--card); } .seg button { border:0; background:none; color:var(--ink); padding:6px 12px; font:inherit; cursor:pointer; }
   .seg button.on { background:var(--ink); color:var(--card); } .tl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-right:6px; }
   .chip { border:1px solid var(--line); border-radius:999px; padding:4px 10px; background:var(--card); color:var(--ink); font:inherit; font-size:12px; cursor:pointer; } .chip.on { border-color:var(--accent); background:rgba(232,131,58,.14); } .chip.na { opacity:.45; }
   main { display:grid; grid-template-columns:340px minmax(0,1fr); gap:14px; padding:14px 16px 20px; max-width:1400px; margin:0 auto; }
   @media (max-width:900px) { main { grid-template-columns:1fr; } }
+  @media (max-width:900px) { .tabsbar { position:sticky; top:0; z-index:8; } }      /* page tabs stay in view while scrolling on small screens; the toolbar sticks just below them (--tabsh is set from the tabs bar height) */
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; } .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:0; padding:12px 14px 6px; font-weight:650; }
-  .models { max-height:calc(100vh - 110px); overflow:auto; position:sticky; top:56px; align-self:start; } @media (max-width:900px) { .models { position:static; max-height:460px; } }
+  .models { align-self:start; }      /* no inner scrolling: every model is visible and the page itself scrolls */
   .hint { padding:0 14px 4px; font-size:11px; color:var(--muted); }
   .grp { padding:8px 14px 2px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
   .row { display:grid; grid-template-columns:22px 1fr 86px 14px; gap:8px; align-items:center; padding:6px 14px; cursor:pointer; border-left:3px solid transparent; } .row:hover { background:rgba(120,130,150,.08); }
@@ -68,8 +69,8 @@
 <body>
 <header>
   <div class="brand"><h1>Real GDP growth: regime models vs. NBER recessions</h1><span>MS-mean · MS-quantile · Eo–Kim vs NBER · COVID handling and a simulated future recession</span></div>
-  <div class="tabs"><a href="sim_results.html">Simulations</a><a href="gdp_results.html" class="cur">Real GDP</a><a href="dfm_results.html">Four-series factor</a><a href="eokim_results.html">Eo–Kim replication</a><a href="piger_results.html">Piger replication</a></div>
 </header>
+<div class="tabsbar"><div class="tabs"><a href="sim_results.html">Simulations</a><a href="gdp_results.html" class="cur">Real GDP</a><a href="dfm_results.html">Four-series factor</a><a href="eokim_results.html">Eo–Kim replication</a><a href="piger_results.html">Piger replication</a></div></div>
 <div class="toolbar">
   <span><span class="tl">Data</span><span class="seg" id="seg-sample"></span></span>
   <span><span class="tl">Rank by</span><span class="seg" id="seg-metric"><button data-m="F1" class="on">F1</button><button data-m="AUC">AUC</button><button data-m="TPR">TPR</button><button data-m="Precision">Prec.</button><button data-m="FPR">FPR</button></span></span>
@@ -221,6 +222,7 @@ window.MI = (function () {
   const names = Array.from(new Set(Object.values(D).flatMap(x => Object.keys(x.models))));   // union over samples: some models exist for one sample only
   const MSQ = names.filter(n => n.startsWith("MSQ")).sort(), HCOL = ["#e8833a", "#7a4fb5"];
   const AX = CFG.axes || null;   // optional: several toolbar selectors whose values are joined with "_" to form the sample key
+  (function () { const tb = document.querySelector(".tabsbar"), set = () => document.documentElement.style.setProperty("--tabsh", (window.matchMedia("(max-width:900px)").matches && tb ? tb.offsetHeight : 0) + "px"); set(); window.addEventListener("resize", set); window.addEventListener("load", set); })();
   const st = { sample: CFG.default_sample, ax: AX ? AX.map(a => a.default) : null, picked: ["MSQ(0.30)"], tau: "MSQ(0.30)", metric: "F1", full: false, restr: true, drift: false, tab: "conv" };   // picked: 1 or 2 models, first = primary (orange), second = comparison (purple)
   const avail = m => !!(D[st.sample].models || {})[m], TAUS = () => MSQ.filter(avail);
   const PRETTY = { "Eo-Kim": "Eo–Kim (paper's sampler)", "Eo-Kim const var": "Eo–Kim, constant variance", "Eo-Kim code": "Eo–Kim, authors' code (ported)", "Eo-Kim exact": "Eo–Kim exact (no sign restr.)" };
