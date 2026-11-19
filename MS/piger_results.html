@@ -73,7 +73,7 @@
 <div class="tabsbar"><div class="tabs"><a href="sim_results.html">Simulations</a><a href="gdp_results.html">Real GDP</a><a href="dfm_results.html">Four-series factor</a><a href="eokim_results.html">Eo–Kim replication</a><a href="piger_results.html" class="cur">Piger replication</a></div></div>
 <div class="toolbar">
   <span><span class="tl">Data</span><span class="seg" id="seg-sample"></span></span>
-  <span><span class="tl">Rank by</span><span class="seg" id="seg-metric"><button data-m="F1" class="on">F1</button><button data-m="AUC">AUC</button><button data-m="TPR">TPR</button><button data-m="Precision">Prec.</button><button data-m="FPR">FPR</button></span></span>
+  <span><span class="tl">Rank by</span><span class="seg" id="seg-metric"><button data-m="Brier" class="on" title="Brier score ×100: mean squared error of the smoothed Pr(low regime) against the NBER indicator (lower is better)">Brier</button><button data-m="F1">F1</button><button data-m="AUC">AUC</button><button data-m="TPR">TPR</button><button data-m="Precision">Prec.</button><button data-m="FPR">FPR</button></span></span>
   <span><span class="tl">Variant</span>
     <button class="chip" id="chip-restr" title="">Restrict low mean &lt; 0</button>
     <button class="chip" id="chip-drift" title="">Slow drift δ(t)</button></span>
@@ -214,13 +214,15 @@ window.MI = (function () {
   const D = window.GDP, $ = id => document.getElementById(id);
   if (window.GDP_PROB100) Object.values(D).forEach(s => Object.keys(s).filter(k => k.startsWith("models")).forEach(k => Object.values(s[k] || {}).forEach(m => { const dec = a => a.map(x => x / 100);   // per-date arrays are stored as integers x100
     ["prob", "sd", "delta"].forEach(f => { if (m[f]) m[f] = dec(m[f]); }); if (m.rt) m.rt = m.rt.map(x => x == null ? null : x / 100); if (m.path) ["m0", "m1"].forEach(f => { if (m.path[f]) m.path[f] = dec(m.path[f]); }); })));
+  Object.values(D).forEach(s => { if (!s || !s.models || !s.nber) return; ["models", "models_a1neg", "models_drift", "models_drift_a1neg"].forEach(k => Object.values(s[k] || {}).forEach(f => {      // Brier score x 100 = 100 * mean (Pr(low)_t - S_t)^2, S_t = the NBER (or true) regime indicator
+    if (!f || !f.prob || !f.metrics || f.prob.length !== s.nber.length) return; let a = 0, n = 0; f.prob.forEach((p, i) => { if (p != null && s.nber[i] != null) { a += (p - s.nber[i]) * (p - s.nber[i]); n++; } }); if (n) f.metrics.Brier = 100 * a / n; })); });
   const SAMPLES = CFG.samples;
   const SM = ["MSM", "MSM-t", "MSM-SV", "MSM-t-SV"], RWEC = ["MSM-RW-EC", "MSM-RW-EC-t", "MSM-RW-EC-SV", "MSM-RW-EC-t-SV"], EK = ["Eo-Kim", "Eo-Kim const var", "Eo-Kim code", "Eo-Kim exact"];
   const names = Array.from(new Set(Object.values(D).flatMap(x => Object.keys(x.models))));   // union over samples: some models exist for one sample only
   const MSQ = names.filter(n => n.startsWith("MSQ")).sort(), HCOL = ["#e8833a", "#7a4fb5"];
   const AX = CFG.axes || null;   // optional: several toolbar selectors whose values are joined with "_" to form the sample key
   (function () { const tb = document.querySelector(".tabsbar"), set = () => document.documentElement.style.setProperty("--tabsh", (window.matchMedia("(max-width:900px)").matches && tb ? tb.offsetHeight : 0) + "px"); set(); window.addEventListener("resize", set); window.addEventListener("load", set); })();
-  const st = { sample: CFG.default_sample, ax: AX ? AX.map(a => a.default) : null, picked: ["MSQ(0.30)"], tau: "MSQ(0.30)", metric: "F1", full: false, restr: true, drift: false, tab: "conv" };   // picked: 1 or 2 models, first = primary (orange), second = comparison (purple)
+  const st = { sample: CFG.default_sample, ax: AX ? AX.map(a => a.default) : null, picked: ["MSQ(0.30)"], tau: "MSQ(0.30)", metric: "Brier", full: false, restr: true, drift: false, tab: "conv" };   // picked: 1 or 2 models, first = primary (orange), second = comparison (purple)
   const avail = m => !!(D[st.sample].models || {})[m], TAUS = () => MSQ.filter(avail);
   const PRETTY = { "Eo-Kim": "Eo–Kim (paper's sampler)", "Eo-Kim const var": "Eo–Kim, constant variance", "Eo-Kim code": "Eo–Kim, authors' code (ported)", "Eo-Kim exact": "Eo–Kim exact (no sign restr.)" };
   const pretty = m => PRETTY[m] || m;
@@ -297,17 +299,18 @@ window.MI = (function () {
     st.picked = [base, T[Math.max(0, j)]]; st.tau = base; render(); }               // two tau values; replaces a non-MSQ second pick if there was one
   function mountSlider() { const slot = $("slot"); if (!slot) return; const T = TAUS(), vs = T.map(m => get(m).metrics[st.metric]), lo = Math.min(...vs), hi = Math.max(...vs), n = vs.length, mp = msqPicked(), hs = mp.length ? mp : [st.tau];
     R1.max = R2.max = n - 1; SL.querySelector("#tl0").textContent = "τ = " + T[0].slice(4, -1); SL.querySelector("#tl1").textContent = T[n - 1].slice(4, -1);
-    SL.querySelector(".trk").style.background = "linear-gradient(to right," + vs.map((v, i) => "rgba(70,110,180," + (0.12 + 0.88 * (v - lo) / Math.max(1e-9, hi - lo)).toFixed(2) + ") " + (100 * i / n).toFixed(1) + "% " + (100 * (i + 1) / n).toFixed(1) + "%").join(",") + ")";
+    SL.querySelector(".trk").style.background = "linear-gradient(to right," + vs.map((v, i) => "rgba(70,110,180," + (0.12 + 0.88 * (st.metric === "Brier" ? hi - v : v - lo) / Math.max(1e-9, hi - lo)).toFixed(2) + ") " + (100 * i / n).toFixed(1) + "% " + (100 * (i + 1) / n).toFixed(1) + "%").join(",") + ")";
     [R1, R2].forEach((Rg, k) => { Rg.style.display = k < hs.length ? "" : "none"; if (k < hs.length) { Rg.value = T.indexOf(hs[k]); Rg.style.setProperty("--c", HCOL[Math.max(0, st.picked.indexOf(hs[k]))]); } });
     const bad = hs.filter(m => conv(m) === "r").length;
-    SL.querySelector("#tl").innerHTML = hs.map(m => '<b style="color:' + (hs.length > 1 ? HCOL[st.picked.indexOf(m)] : "inherit") + '">τ = ' + m.slice(4, -1) + "</b>").join(" and ") + " · darker = higher " + metricName() + (bad ? " · <span style='color:var(--bad)'>not converged</span>" : "") +
+    SL.querySelector("#tl").innerHTML = hs.map(m => '<b style="color:' + (hs.length > 1 ? HCOL[st.picked.indexOf(m)] : "inherit") + '">τ = ' + m.slice(4, -1) + "</b>").join(" and ") + (st.metric === "Brier" ? " · darker = lower " : " · darker = higher ") + metricName() + (bad ? " · <span style='color:var(--bad)'>not converged</span>" : "") +
       (mp.length === 1 ? ' · <button class="addtau" id="addtau" title="Adds a second tau handle so two MSQ models can be compared">+ compare another τ' + (st.picked.length === 2 ? " (replaces " + tileLabel(st.picked.find(m => !m.startsWith("MSQ"))) + ")" : "") + "</button>"
         : mp.length === 0 ? ' · <button class="addtau" id="addtau" title="Selects two MSQ models to compare">compare two τ</button>' : "");
     const bt = SL.querySelector("#addtau"); if (bt) bt.onclick = addTau; if (SL.parentNode !== slot) slot.appendChild(SL); }
-  const metricName = () => ({ F1: "F1", AUC: "AUC", TPR: "TPR", Precision: "precision", FPR: "FPR" })[st.metric];
-  const goodness = v => st.metric === "FPR" ? 1 - Math.min(1, v * 2) : v;
+  const metricName = () => ({ Brier: "Brier", F1: "F1", AUC: "AUC", TPR: "TPR", Precision: "precision", FPR: "FPR" })[st.metric];
+  const goodness = v => st.metric === "FPR" ? 1 - Math.min(1, v * 2) : st.metric === "Brier" ? 1 - Math.min(1, v / 20) : v;
+  const fmtM = v => st.metric === "Brier" ? v.toFixed(1) : st.metric === "AUC" ? v.toFixed(2) : pct(v);
   function rowHTML(m) { const g = get(m), v = g.metrics[st.metric], sfx = (isRestricted(m) ? " <small>α₁&lt;0</small>" : "") + (isDrift(m) ? " <small>+drift</small>" : "");
-    return '<div class="row" data-m="' + m + '"><input type="checkbox" data-c="1"><span class="nm">' + pretty(m) + sfx + '</span><span><span class="bar"><i style="width:' + Math.max(2, goodness(v) * 100) + '%"></i></span><div class="v">' + metricName() + " " + (st.metric === "AUC" ? v.toFixed(2) : pct(v)) +
+    return '<div class="row" data-m="' + m + '"><input type="checkbox" data-c="1"><span class="nm">' + pretty(m) + sfx + '</span><span><span class="bar"><i style="width:' + Math.max(2, goodness(v) * 100) + '%"></i></span><div class="v">' + metricName() + " " + fmtM(v) +
       '</div></span><span class="dot ' + conv(m) + '" title="' + dtip(g.diag) + convTxt[conv(m)] + '"></span></div>'; }
   function list() { let h = "";
     if (CFG.rows) CFG.rows.forEach(g => { const ms = g.models.filter(avail); if (ms.length) h += '<div class="grp">' + g.group + '</div>' + ms.map(rowHTML).join(""); });
@@ -363,7 +366,8 @@ window.MI = (function () {
   function renderStats() { const A = st.picked[0], B = st.picked[1], q = get(A), qb = B ? get(B) : null, [expM, recM] = nberMeans();
     const avg = A.startsWith("Eo") ? " (avg.)" : (q.delta ? " (vs. drift δ)" : "");
     const dl = (x, y, f) => { const d = x - y; return (d >= 0 ? "+" : "−") + f(Math.abs(d)); };
-    const rows = [["F1 score", q.metrics.F1.toFixed(2), "AUC " + q.metrics.AUC.toFixed(2) + " · FPR " + pct(q.metrics.FPR), qb && tileLabel(B) + " " + qb.metrics.F1.toFixed(2) + " (" + dl(q.metrics.F1, qb.metrics.F1, v => v.toFixed(2)) + ")"],
+    const rows = [(q.metrics.Brier != null ? ["Brier score ×100", q.metrics.Brier.toFixed(1), "F1 " + q.metrics.F1.toFixed(2) + " · AUC " + q.metrics.AUC.toFixed(2) + " · FPR " + pct(q.metrics.FPR) + " · lower is better", qb && tileLabel(B) + " " + qb.metrics.Brier.toFixed(1) + " (" + dl(q.metrics.Brier, qb.metrics.Brier, v => v.toFixed(1)) + ")"]
+      : ["F1 score", q.metrics.F1.toFixed(2), "AUC " + q.metrics.AUC.toFixed(2) + " · FPR " + pct(q.metrics.FPR), qb && tileLabel(B) + " " + qb.metrics.F1.toFixed(2) + " (" + dl(q.metrics.F1, qb.metrics.F1, v => v.toFixed(2)) + ")"]),
       ["True positive rate", pct(q.metrics.TPR), "precision " + pct(q.metrics.Precision), qb && tileLabel(B) + " " + pct(qb.metrics.TPR) + " (" + dl(q.metrics.TPR, qb.metrics.TPR, v => Math.round(v * 100) + " pts") + ")"],
       ["Low-regime mean" + avg, fmt(q.alpha[1]), NBW + "s: <b>" + fmt(recM) + "</b>" + (R().truth ? " &nbsp;(" + sget("truth_word") + ": " + R().truth[1].toFixed(2) + ")" : ""), qb && tileLabel(B) + " " + fmt(qb.alpha[1])],
       ["High-regime mean" + avg, fmt(q.alpha[0]), NBW.replace("recession", "expansion") + "s: <b>" + fmt(expM) + "</b>" + (R().truth ? " &nbsp;(" + sget("truth_word") + ": " + R().truth[0].toFixed(2) + ")" : ""), qb && tileLabel(B) + " " + fmt(qb.alpha[0])]];
@@ -401,10 +405,10 @@ window.MI = (function () {
     const o = q.diag_old; if (o) h += '<p class="note" style="margin:8px 0 0">For comparison, the standard Gibbs sampler (regime path drawn given the means) gave max R̂ <b class="' + rcls(o.rhat) + '">' + o.rhat.toFixed(2) + "</b>, PSRF " + (o.psrf == null ? "n/a" : o.psrf.toFixed(2)) + ", min bulk ESS " + o.ess_bulk + ", and a gap in Pr(low) between chains of " + o.dpr.toFixed(2) + ".</p>";
     return h; }
   function eachModel(f) { return st.picked.map(m => (st.picked.length > 1 ? '<div class="mname">' + pretty(m) + "</div>" : "") + f(m)).join(""); }
-  function tableHTML() { const EC = R().extra_cols || [], cols = ["AUC", "TPR", "FPR", "Precision", "F1"], all = (CFG.rows ? CFG.rows.flatMap(g => g.models).concat(TAUS()) : SM.concat(TAUS(), RWEC, EK)).filter(avail);
+  function tableHTML() { const EC = R().extra_cols || [], cols = ["Brier", "AUC", "TPR", "FPR", "Precision", "F1"], all = (CFG.rows ? CFG.rows.flatMap(g => g.models).concat(TAUS()) : SM.concat(TAUS(), RWEC, EK)).filter(avail);
     return '<div class="tblw"><table id="tbl"><thead><tr><th>Model</th>' + cols.map(c => "<th>" + (c === "Precision" ? "Prec." : c) + "</th>").join("") + "<th>Low regime</th><th>High regime</th><th title=\"Largest gap in Pr(low regime) between chains in any month (percentage points); the dot sets the page flag\">Chain gap, Pr(low)</th><th>R̂</th><th>Min ESS</th>" + EC.map(c => '<th title="' + c.tip + '">' + c.label + "</th>").join("") + "</tr></thead><tbody>" +
       all.map(m => { const g = get(m), i = st.picked.indexOf(m); return '<tr data-m="' + m + '" class="' + (i === 0 ? "sel" : i === 1 ? "sel2" : "") + '"><td>' + pretty(m) + (isRestricted(m) ? " <small>(α₁&lt;0)</small>" : "") + (isDrift(m) ? " <small>(+drift)</small>" : "") + "</td>" +
-        cols.map(c => "<td>" + g.metrics[c].toFixed(2) + "</td>").join("") + "<td>" + g.alpha[1].toFixed(CFG.dec) + "</td><td>" + g.alpha[0].toFixed(CFG.dec) + "</td>" +
+        cols.map(c => "<td>" + (c === "Brier" ? g.metrics[c].toFixed(1) : g.metrics[c].toFixed(2)) + "</td>").join("") + "<td>" + g.alpha[1].toFixed(CFG.dec) + "</td><td>" + g.alpha[0].toFixed(CFG.dec) + "</td>" +
         (g.diag ? '<td><span class="dot ' + flagOf(g.diag) + '"></span> ' + Math.round(100 * g.diag.dpr) + "</td><td>" + g.diag.rhat.toFixed(2) + "</td><td>" + Math.min(g.diag.ess_bulk, g.diag.ess_tail) + "</td>" : '<td><span class="dot n"></span></td><td></td><td></td>') + EC.map(c => "<td>" + (g.extra && g.extra[c.key] != null ? (c.pct ? Math.round(100 * g.extra[c.key]) + "%" : (c.int ? (g.extra[c.key] < 0 ? "never" : Math.round(g.extra[c.key])) : g.extra[c.key].toFixed(2))) : "–") + "</td>").join("") + "</tr>"; }).join("") + "</tbody></table></div>"; }
   function girHTML() { const G = R().gir || []; if (!G.length) return "<p class='note'>No Getting-it-Right results for this sample.</p>";
     let h = '<p class="note" style="margin:0 0 8px">Geweke (2004) joint-distribution test: a sampler that targets its own posterior gives the same joint distribution of parameters and states whether they are drawn directly from the prior or from a chain that alternates between simulating data and one sweep of the sampler. T = ' + G[0].T + ' observations; ' + G[0].M1.toLocaleString() + ' direct draws and ' + G[0].M2.toLocaleString() + ' successive-conditional sweeps; tests on means and cross-products of the parameters and state summaries. A sampler passes when the largest |Z| stays below the Bonferroni 0.1% cutoff. The P-P plots compare the two distributions of each test function (a correct sampler lies on the diagonal; red = |Z| above 3.3).</p>';
